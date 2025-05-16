@@ -1,18 +1,40 @@
 "use client"
 
+import * as React from 'react';
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Menu, UserCircle, Dumbbell, XIcon, LogOut, LayoutDashboard, Sparkles, Info, Newspaper } from 'lucide-react';
+import { Menu, UserCircle, Dumbbell, XIcon, LogOut, LayoutDashboard, Sparkles, Info, Newspaper, ChevronDown, Calculator } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
+
+type GenderType = "male" | "female" | "other" | "prefer_not_to_say";
+
+// Data profil dummy awal untuk disimpan saat simulate login
+const DUMMY_INITIAL_PROFILE_DATA = {
+  name: 'Aprido Ilham',
+  username: 'ApridoIlham',
+  gender: "male" as GenderType,
+  heightCm: 185,
+  currentWeightKg: 92,
+};
 
 interface NavItem {
   href: string;
   label: string;
   icon?: React.ElementType;
+  description?: string;
 }
 
 const mainNavItems: NavItem[] = [
@@ -21,48 +43,73 @@ const mainNavItems: NavItem[] = [
   { href: "/about", label: "About GYM BRO", icon: Info },
 ];
 
+const featureNavItems: NavItem[] = [
+  { href: "/features/bmi-calculator", label: "BMI Calculator", icon: Calculator, description: "Quickly assess your Body Mass Index." },
+];
+
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false); 
+  const [displayName, setDisplayName] = useState<string | null>(null);
   const pathname = usePathname();
   const headerRef = useRef<HTMLElement>(null);
-  const [headerHeight, setHeaderHeight] = useState(80); 
+  const [headerActualHeight, setHeaderActualHeight] = useState(0); 
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
+    const storedLoginStatus = localStorage.getItem('isLoggedInGYMBRO');
+    const storedProfileString = localStorage.getItem('gymBroUserProfile');
+    
+    if (storedLoginStatus === 'true') {
+      setIsLoggedIn(true);
+      if (storedProfileString) {
+        try {
+          const profile = JSON.parse(storedProfileString);
+          const nameToDisplay = profile.name ? profile.name.split(" ")[0] : DUMMY_INITIAL_PROFILE_DATA.name.split(" ")[0];
+          setDisplayName(nameToDisplay);
+        } catch (e) {
+          setDisplayName(DUMMY_INITIAL_PROFILE_DATA.name.split(" ")[0]);
+        }
+      } else {
+        setDisplayName(DUMMY_INITIAL_PROFILE_DATA.name.split(" ")[0]); 
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
-    if (headerRef.current) {
-      setHeaderHeight(headerRef.current.offsetHeight);
-    }
-  }, [isScrolled, isMenuOpen]); 
+    if (headerRef.current) setHeaderActualHeight(headerRef.current.offsetHeight);
+  }, [isScrolled, isMenuOpen, pathname]); 
 
   useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
-    return () => {
-      document.body.style.overflow = 'auto';
-    };
+    document.body.style.overflow = isMenuOpen ? 'hidden' : 'auto';
+    return () => { document.body.style.overflow = 'auto'; };
   }, [isMenuOpen]);
 
-  const toggleLogin = () => {
-    setIsLoggedIn(prev => !prev);
+  const handleLoginLogout = () => {
+    const newLoginStatus = !isLoggedIn;
+    setIsLoggedIn(newLoginStatus);
     setIsMenuOpen(false); 
+    if (newLoginStatus) {
+      localStorage.setItem('isLoggedInGYMBRO', 'true');
+      localStorage.setItem('gymBroUserProfile', JSON.stringify(DUMMY_INITIAL_PROFILE_DATA));
+      setDisplayName(DUMMY_INITIAL_PROFILE_DATA.name.split(" ")[0]);
+    } else {
+      localStorage.removeItem('isLoggedInGYMBRO');
+      localStorage.removeItem('gymBroUserProfile');
+      setDisplayName(null);
+    }
   };
   
   const closeMenuOnly = () => setIsMenuOpen(false);
 
-  const NavLink = ({ href, children, icon: Icon, isMobile = false, isActiveOverride }: { href: string; children: React.ReactNode; icon?: React.ElementType; isMobile?: boolean; isActiveOverride?: boolean }) => {
-    const isActive = isActiveOverride !== undefined ? isActiveOverride : pathname === href;
+  const NavLink = ({ href, children, icon: Icon, isMobile = false, isActiveOverride, className }: { href: string; children: React.ReactNode; icon?: React.ElementType; isMobile?: boolean; isActiveOverride?: boolean; className?: string }) => {
+    const isActive = isActiveOverride !== undefined ? isActiveOverride : pathname === href || (href.startsWith("/features") && pathname.startsWith("/features"));
     return (
       <Link
         href={href}
@@ -73,7 +120,8 @@ const Header = () => {
             ? "text-xl py-4 px-4 rounded-lg hover:bg-zinc-800/70 w-full" 
             : "text-sm relative pb-1 hover:text-white",
           isActive && !isMobile ? "text-white" : "text-gray-300",
-          isActive && isMobile ? "bg-primary text-primary-foreground font-semibold" : "text-gray-200 hover:text-white"
+          isActive && isMobile ? "bg-primary text-primary-foreground font-semibold" : "text-gray-200 hover:text-white",
+          className
         )}
       >
         {Icon && <Icon size={isMobile ? 24 : 18} className={cn(isActive && isMobile ? "" : "text-primary", "flex-shrink-0 transition-colors group-hover:text-primary/80")} />}
@@ -87,6 +135,38 @@ const Header = () => {
       </Link>
     );
   };
+  
+  const ListItem = React.forwardRef<
+    React.ElementRef<"a">,
+    React.ComponentPropsWithoutRef<"a"> & { title: string, icon?: React.ElementType }
+  >(({ className, title, children, icon: Icon, href, ...props }, ref) => {
+    return (
+      <li>
+        <NavigationMenuLink asChild>
+          <Link
+            href={href || '#'}
+            ref={ref}
+            onClick={closeMenuOnly}
+            className={cn(
+              "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground group",
+              className
+            )}
+            {...props}
+          >
+            <div className="flex items-center gap-2 text-sm font-medium leading-none text-white group-hover:text-black">
+              {Icon && <Icon size={18} className="text-primary group-hover:text-black"/>}
+              {title}
+            </div>
+            <p className="line-clamp-2 text-xs leading-snug text-gray-400 group-hover:text-gray-700">
+              {children}
+            </p>
+          </Link>
+        </NavigationMenuLink>
+      </li>
+    );
+  });
+  ListItem.displayName = "ListItem";
+
 
   return (
     <>
@@ -103,27 +183,78 @@ const Header = () => {
             <span className="tracking-tight">GYM BRO</span>
           </Link>
 
-          <nav className="hidden md:flex items-center space-x-6 lg:space-x-8">
-            {mainNavItems.map(item => <NavLink key={item.href} href={item.href} icon={item.icon}>{item.label}</NavLink>)}
-            {isLoggedIn ? (
+          <NavigationMenu className="hidden md:flex">
+            <NavigationMenuList>
+              {mainNavItems.map(item => (
+                <NavigationMenuItem key={item.label}>
+                   <Link href={item.href} legacyBehavior passHref>
+                    <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-sm font-medium", pathname === item.href ? "text-white" : "text-gray-300 hover:text-white")}>
+                      {item.icon && <item.icon size={16} className="mr-1.5 text-primary/80" />} {item.label}
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+              ))}
+
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(),"bg-transparent text-sm font-medium data-[state=open]:bg-zinc-800/50 data-[state=open]:text-white", pathname.startsWith("/features") ? "text-white" : "text-gray-300 hover:text-white")}>
+                    <Sparkles size={16} className="mr-1.5 text-primary/80" /> Features
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid w-[380px] gap-3 p-4 md:w-[450px] md:grid-cols-1 lg:w-[500px] bg-zinc-900 border-zinc-700/80 shadow-xl rounded-lg">
+                    {featureNavItems.map((feature) => (
+                      <ListItem
+                        key={feature.label}
+                        title={feature.label}
+                        href={feature.href}
+                        icon={feature.icon}
+                      >
+                        {feature.description}
+                      </ListItem>
+                    ))}
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+
+            {isLoggedIn && displayName ? (
               <>
-                <NavLink href="/profile" icon={UserCircle}>Profile</NavLink>
-                <Button onClick={toggleLogin} variant="outline" size="sm" className="border-primary/60 text-primary hover:bg-primary hover:text-primary-foreground text-xs">
-                  <LogOut size={14} className="mr-1.5" /> Logout
-                </Button>
+                <NavigationMenuItem>
+                  <Link href="/profile" legacyBehavior passHref>
+                      <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-sm font-medium hover:text-white", pathname === "/profile" ? "text-white" : "text-gray-300")}>
+                          Halo Bro, <span className="text-primary font-semibold ml-1">{displayName}</span>
+                      </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <Button onClick={handleLoginLogout} variant="outline" size="sm" className="border-primary/60 text-primary hover:bg-primary hover:text-primary-foreground text-xs ml-2">
+                    <LogOut size={14} className="mr-1.5" /> Logout
+                  </Button>
+                </NavigationMenuItem>
               </>
             ) : (
-              <div className="flex items-center space-x-3">
-                <NavLink href="/login">Login</NavLink>
-                <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold px-5">
+              <div className="flex items-center space-x-1 ml-2">
+                 <NavigationMenuItem>
+                    <Link href="/login" legacyBehavior passHref>
+                        <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-sm font-medium", pathname === "/login" ? "text-white" : "text-gray-300 hover:text-white")}>
+                            Login
+                        </NavigationMenuLink>
+                    </Link>
+                  </NavigationMenuItem>
+                <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold px-4">
                   <Link href="/register">Get Started</Link>
                 </Button>
-                <Button onClick={toggleLogin} variant="link" size="sm" className="text-xs text-gray-400 hover:text-primary px-1 h-auto py-0">(Simulate Login)</Button>
+                <Button onClick={handleLoginLogout} variant="link" size="sm" className="text-xs text-gray-400 hover:text-primary px-1 h-auto py-0">(Simulate Login)</Button>
               </div>
             )}
-          </nav>
+            </NavigationMenuList>
+          </NavigationMenu>
+
 
           <div className="md:hidden flex items-center">
+             {isLoggedIn && displayName && (
+                 <Link href="/profile" className="text-white p-1.5 hover:bg-white/10 rounded-full mr-1" onClick={closeMenuOnly} aria-label="Profile">
+                    <UserCircle size={22} />
+                </Link>
+            )}
             <Button variant="ghost" size="icon" className="text-white hover:bg-white/10" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu">
               <AnimatePresence initial={false} mode="wait">
                 <motion.div
@@ -146,22 +277,27 @@ const Header = () => {
           <motion.div
             className="md:hidden fixed inset-x-0 bg-black/95 backdrop-blur-xl p-6 flex flex-col z-[55]"
             style={{ 
-              top: `${headerHeight}px`, 
-              height: `calc(100vh - ${headerHeight}px)` 
+              top: `${headerActualHeight}px`, 
+              height: `calc(100vh - ${headerActualHeight}px)` 
             }}
             initial={{ opacity: 0, y: "-100%" }}
             animate={{ opacity: 1, y: "0%" }}
             exit={{ opacity: 0, y: "-100%" }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            <div className="space-y-3 flex-grow overflow-y-auto pb-20 pt-4">
+            <div className="space-y-2.5 flex-grow overflow-y-auto pb-20 pt-4">
                 {mainNavItems.map(item => <NavLink key={item.href} href={item.href} icon={item.icon} isMobile>{item.label}</NavLink>)}
-                <Separator className="bg-zinc-700/80 my-4" />
-                {isLoggedIn ? (
+                
+                <Separator className="bg-zinc-700/80 my-3" />
+                <p className="px-4 pt-2 pb-1 text-sm font-semibold text-primary">Features</p>
+                {featureNavItems.map(item => <NavLink key={item.href} href={item.href} icon={item.icon} isMobile>{item.label}</NavLink>)}
+                
+                <Separator className="bg-zinc-700/80 my-3" />
+                {isLoggedIn && displayName ? (
                     <>
-                    <NavLink href="/profile" icon={UserCircle} isMobile>Profile</NavLink>
+                    <NavLink href="/profile" icon={UserCircle} isMobile>Halo Bro, {displayName}</NavLink>
                     <div className="pt-6">
-                        <Button onClick={toggleLogin} variant="outline" size="lg" className="w-full border-primary/60 text-primary hover:bg-primary hover:text-primary-foreground py-3 text-base">
+                        <Button onClick={handleLoginLogout} variant="outline" size="lg" className="w-full border-primary/60 text-primary hover:bg-primary hover:text-primary-foreground py-3 text-base">
                             <LogOut size={18} className="mr-2" /> Logout
                         </Button>
                     </div>
@@ -180,7 +316,7 @@ const Header = () => {
             
             {!isLoggedIn && (
                 <div className="pt-4 mt-auto border-t border-zinc-700/80">
-                    <Button onClick={toggleLogin} variant="secondary" size="lg" className="w-full text-sm py-3 bg-zinc-700 hover:bg-zinc-600 text-gray-300">
+                    <Button onClick={handleLoginLogout} variant="secondary" size="lg" className="w-full text-sm py-3 bg-zinc-700 hover:bg-zinc-600 text-gray-300">
                         (Simulate Login: Click Me!)
                     </Button>
                 </div>
