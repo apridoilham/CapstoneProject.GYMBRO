@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import ProfileClient from './profile-client';
+import ProfileClient from './profile-client'; // Pastikan ini nama file klien Anda
 
 export const metadata: Metadata = {
-  title: 'Your GYM BRO Profile',
-  description: 'View and manage your GYM BRO profile, track your progress, and update your personal and health information.',
+  title: 'Your GYM BRO Command Center | Profile',
+  description: 'View, manage, and refine your GYM BRO profile. Track progress, update metrics, and personalize your AI-driven fitness journey.',
 };
 
-export default function ProfilePage() {
+export default function ProfilePageLayout() {
   return <ProfileClient />;
 }
