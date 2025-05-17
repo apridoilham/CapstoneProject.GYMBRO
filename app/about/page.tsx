@@ -1,5 +1,11 @@
 import Image from 'next/image';
 import { Brain, Target, Zap, Users } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'About GYM BRO - Our Mission and Vision',
+  description: "Learn about GYM BRO's mission to revolutionize personalized fitness through AI-driven insights, our innovative approach, and how we're building a community committed to peak performance.",
+};
 
 export default function AboutPage() {
   return (
@@ -14,17 +20,19 @@ export default function AboutPage() {
               We're not just another fitness app. We're your personal AI-driven coach, committed to revolutionizing how you understand and achieve peak physical condition.
             </p>
           </header>
-          
+
           <div className="relative aspect-video mb-12 md:mb-16 rounded-xl overflow-hidden shadow-2xl">
-            <Image 
+            <Image
               src="https://images.pexels.com/photos/841130/pexels-photo-841130.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
               alt="Diverse group of people working out, representing the GYM BRO community"
               fill
               className="object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
+              priority
             />
              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
           </div>
-          
+
           <div className="space-y-10 text-gray-300 text-base md:text-lg leading-relaxed">
             <section>
               <h2 className="text-2xl md:text-3xl font-semibold text-white mb-4 flex items-center">
@@ -55,7 +63,7 @@ export default function AboutPage() {
                 We believe in science-backed methodologies and data-driven decisions. Our platform continuously learns and adapts, ensuring your fitness journey evolves as you do. Whether you're aiming to build muscle, shed fat, or boost overall wellness, GYM BRO provides the clarity and direction you need. We focus on sustainable habits and real-world applicability, making elite-level fitness intelligence accessible to everyone.
               </p>
             </section>
-            
+
             <section>
               <h2 className="text-2xl md:text-3xl font-semibold text-white mb-4 flex items-center">
                 <Users size={28} className="mr-3 text-primary" />

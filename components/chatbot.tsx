@@ -21,6 +21,7 @@ export default function Chatbot() {
   const [input, setInput] = useState('');
   const [isLoadingResponse, setIsLoadingResponse] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -29,6 +30,7 @@ export default function Chatbot() {
   useEffect(() => {
     if (isOpen) {
       scrollToBottom();
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [messages, isOpen]);
 
@@ -40,7 +42,7 @@ export default function Chatbot() {
     setMessages(prev => [...prev, newUserMessage]);
     const currentInput = input;
     setInput('');
-    
+
     await new Promise(resolve => setTimeout(resolve, 1200));
 
     const botResponse: Message = {
@@ -58,6 +60,8 @@ export default function Chatbot() {
         onClick={() => setIsOpen(true)}
         className="fixed bottom-6 right-6 bg-primary text-primary-foreground p-4 rounded-full shadow-xl hover:bg-primary/80 transition-all duration-300 z-50 transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black"
         aria-label="Open GYM BRO Assistant"
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
       >
         <MessageSquareText size={28} />
       </button>
@@ -65,6 +69,9 @@ export default function Chatbot() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="chatbot-title"
             initial={{ opacity: 0, y: 30, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.98 }}
@@ -74,7 +81,7 @@ export default function Chatbot() {
             <header className="bg-zinc-800 p-3.5 flex justify-between items-center border-b border-zinc-700">
               <div className="flex items-center">
                 <BotIcon size={20} className="mr-2.5 text-primary" />
-                <h3 className="text-white font-semibold text-md">GYM BRO AI</h3>
+                <h3 id="chatbot-title" className="text-white font-semibold text-md">GYM BRO AI</h3>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
@@ -85,7 +92,7 @@ export default function Chatbot() {
               </button>
             </header>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-black/30">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-black/30" aria-live="polite">
               {messages.map((message) => (
                 <div
                   key={message.id}
@@ -127,12 +134,12 @@ export default function Chatbot() {
             <footer className="p-3 border-t border-zinc-700 bg-zinc-800/90">
               <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2 items-center">
                 <Input
+                  ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Ask your GYM BRO AI..."
                   className="flex-1 bg-zinc-700 border-zinc-600 text-white placeholder-gray-400 focus:border-primary/80 h-10"
                   aria-label="Chat input"
-                  autoFocus
                 />
                 <Button
                   type="submit"

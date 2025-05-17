@@ -39,7 +39,7 @@ const gymBroCategories = [
 ];
 
 const CategoryCards = ({ className }: CategoryCardsProps) => {
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [activeCard, setActiveCard] = useState<string | null>(null);
 
   return (
     <section className={cn("py-16 md:py-24 bg-black", className)}>
@@ -57,45 +57,60 @@ const CategoryCards = ({ className }: CategoryCardsProps) => {
           {gymBroCategories.map((category, index) => (
             <motion.div
               key={category.id}
-              className="relative rounded-xl overflow-hidden group cursor-pointer shadow-2xl bg-zinc-900"
-              onMouseEnter={() => setHoveredCard(category.id)}
-              onMouseLeave={() => setHoveredCard(null)}
+              className="relative rounded-xl overflow-hidden group shadow-2xl bg-zinc-900 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 focus-within:ring-offset-black"
+              onMouseEnter={() => setActiveCard(category.id)}
+              onMouseLeave={() => setActiveCard(null)}
+              onFocus={() => setActiveCard(category.id)}
+              onBlur={() => setActiveCard(null)}
               whileHover={{ y: -10, boxShadow: "0px 20px 30px -10px rgba(var(--primary-rgb, 255,255,255),0.3)"}}
+              whileFocus={{ y: -10, boxShadow: "0px 20px 30px -10px rgba(var(--primary-rgb, 255,255,255),0.3)"}}
               transition={{ duration: 0.3, ease: "easeInOut" }}
+              tabIndex={0}
+              role="group"
+              aria-labelledby={`category-title-${category.id}`}
             >
               <div className="aspect-[16/10] relative">
                 <Image
                   src={category.image}
                   alt={category.title}
                   fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105 group-focus-within:scale-105"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
               </div>
-              
+
               <div className="absolute inset-0 p-6 flex flex-col justify-end">
                 <div className="mb-3">
                   <category.icon className="h-10 w-10 text-primary mb-2"/>
                 </div>
-                <h3 className="text-2xl font-semibold text-white mb-2">{category.title}</h3>
-                
-                <div 
+                <h3 id={`category-title-${category.id}`} className="text-2xl font-semibold text-white mb-2">{category.title}</h3>
+
+                <div
                   className={cn(
                     "transition-all duration-300 ease-in-out",
-                    hoveredCard === category.id ? "max-h-40 opacity-100 mt-1" : "max-h-0 opacity-0"
+                    activeCard === category.id ? "max-h-40 opacity-100 mt-1" : "max-h-0 opacity-0"
                   )}
                   style={{ overflow: 'hidden' }}
+                  aria-hidden={activeCard !== category.id}
                 >
                   <p className="text-gray-300 mb-4 text-sm leading-relaxed">{category.description}</p>
-                  <Link href={category.link || '#'} className="inline-flex items-center text-white font-semibold text-sm group/link">
-                    Explore Feature <TrendingUp size={18} className="ml-1.5 transition-transform duration-300 group-hover/link:translate-x-1" />
+                  <Link
+                    href={category.link || '#'}
+                    className={cn(
+                        "inline-flex items-center text-white font-semibold text-sm group/link",
+                        activeCard !== category.id && "pointer-events-none"
+                    )}
+                    tabIndex={activeCard === category.id ? 0 : -1}
+                  >
+                    Explore Feature <TrendingUp size={18} className="ml-1.5 transition-transform duration-300 group-hover/link:translate-x-1 group-focus/link:translate-x-1" />
                   </Link>
                 </div>
               </div>
-              
+
               <div className={cn(
                   "absolute top-4 right-4 w-10 h-10 bg-white/10 text-white backdrop-blur-sm rounded-full flex items-center justify-center text-sm font-bold transition-opacity duration-300",
-                  hoveredCard === category.id ? "opacity-0" : "opacity-100"
+                  activeCard === category.id ? "opacity-0" : "opacity-100"
                 )}
               >
                 0{index + 1}

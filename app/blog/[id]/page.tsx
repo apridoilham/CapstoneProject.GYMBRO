@@ -2,13 +2,15 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, CalendarDays, UserCircle, Clock } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const blogsData = [
   {
     id: "1",
     title: "Science-Backed Fat Loss: No More Bro Science",
     excerpt: "Ditch the myths. GYM BRO breaks down the proven strategies for effective and sustainable fat loss. Real data, real results.",
-    content: "The journey to effective fat loss is often clouded by misinformation and 'bro science'. At GYM BRO, we cut through the noise. This article delves into the fundamental principles of energy balance, the role of macronutrients (protein, carbs, fats) in satiety and metabolic health, and the importance of resistance training in preserving muscle mass during a caloric deficit. We'll explore how GYM BRO's AI analyzes your specific metabolic markers, activity levels, and body composition goals to create a sustainable nutrition and training protocol. Forget cookie-cutter diets; it's time for a plan as unique as your DNA. We'll also touch upon common pitfalls, the truth about 'fat-burning' foods, and how to track progress beyond the scale.",
+    content: "The journey to effective fat loss is often clouded by misinformation and 'bro science'.\n\nAt GYM BRO, we cut through the noise. This article delves into the fundamental principles of energy balance, the role of macronutrients (protein, carbs, fats) in satiety and metabolic health, and the importance of resistance training in preserving muscle mass during a caloric deficit.\n\nWe'll explore how GYM BRO's AI analyzes your specific metabolic markers, activity levels, and body composition goals to create a sustainable nutrition and training protocol. Forget cookie-cutter diets; it's time for a plan as unique as your DNA.\n\nWe'll also touch upon common pitfalls, the truth about 'fat-burning' foods, and how to track progress beyond the scale.\n\n### Key Takeaways\n\n* Energy balance is king.\n* Protein is crucial for satiety and muscle preservation.\n* Resistance training is non-negotiable.",
     date: "May 17, 2025",
     category: "Nutrition",
     image: "https://images.pexels.com/photos/5627274/pexels-photo-5627274.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
@@ -94,8 +96,9 @@ const blogsData = [
   }
 ];
 
+
 async function getBlogData(id: string) {
-  await new Promise(resolve => setTimeout(resolve, 300)); 
+  await new Promise(resolve => setTimeout(resolve, 300));
   return blogsData.find(blog => blog.id === id);
 }
 
@@ -171,18 +174,16 @@ export default async function BlogPostPage({ params }: { params: { id: string } 
               </div>
             )}
 
-            <div 
-              className="prose prose-lg prose-invert max-w-none text-gray-300 
+            <div
+              className="prose prose-lg prose-invert max-w-none text-gray-300
                          prose-p:leading-relaxed prose-headings:text-white prose-headings:font-semibold
                          prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-                         prose-strong:text-white prose-blockquote:border-l-4 prose-blockquote:border-primary 
+                         prose-strong:text-white prose-blockquote:border-l-4 prose-blockquote:border-primary
                          prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-400
                          prose-li:marker:text-primary"
             >
               <p className="lead text-xl md:text-2xl text-gray-200 !mb-6 !leading-snug">{post.excerpt}</p>
-              {post.content.split('\n').map((paragraph, index) => (
-                <p key={index}>{paragraph}</p>
-              ))}
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
             </div>
           </article>
         </div>
