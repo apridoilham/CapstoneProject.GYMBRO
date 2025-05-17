@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { Brain, Zap, Target, Dumbbell, TrendingUp, Utensils } from 'lucide-react';
+import { Brain, Dumbbell, Utensils, Calculator, Zap, Camera, TrendingUp } from 'lucide-react';
 
 interface CategoryCardsProps {
   className?: string;
@@ -13,28 +13,28 @@ interface CategoryCardsProps {
 
 const gymBroCategories = [
   {
-    id: 'ai-analysis',
-    title: 'AI Body Analysis',
-    description: 'Decode your unique physiology. Our AI dives deep into your metrics to reveal your true fitness potential and how to unlock it.',
-    image: 'https://images.pexels.com/photos/3768916/pexels-photo-3768916.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-    icon: Brain,
-    link: '/features/ai-analysis'
+    id: 'food-analyzer',
+    title: 'AI Food Analyzer',
+    description: 'Snap a pic of your meal! Our AI identifies food and estimates nutritional content to keep you on track.',
+    image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2', // Ganti gambar jika perlu
+    icon: Camera,
+    link: '/food-analyzer' // Path ke fitur utama Food Analyzer
   },
   {
-    id: 'personalized-training',
-    title: 'Hyper-Personalized Training',
-    description: 'Stop generic routines. Get workout plans precision-engineered for your goals, your body, and your progress. Maximum impact, zero guesswork.',
-    image: 'https://images.pexels.com/photos/2261477/pexels-photo-2261477.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-    icon: Dumbbell,
-    link: '/features/personalized-training'
+    id: 'bmi-calculator',
+    title: 'BMI Calculator',
+    description: 'Quickly assess your Body Mass Index and understand your current weight category with our simple tool.',
+    image: 'https://images.pexels.com/photos/40751/running-runner-long-distance-fitness-40751.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2', // Ganti gambar jika perlu
+    icon: Calculator,
+    link: '/features/bmi-calculator'
   },
   {
-    id: 'nutrition-strategy',
-    title: 'Strategic Nutrition',
-    description: 'Fuel your transformation. GYM BRO crafts data-driven nutrition strategies that align with your workouts and accelerate your results.',
-    image: 'https://images.pexels.com/photos/1640773/pexels-photo-1640773.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-    icon: Utensils,
-    link: '/features/nutrition-strategy'
+    id: 'tdee-calculator',
+    title: 'Calorie & TDEE Planner',
+    description: 'Estimate your daily calorie needs (TDEE) and plan your intake for weight maintenance, loss, or gain.',
+    image: 'https://images.pexels.com/photos/1128318/pexels-photo-1128318.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2', // Ganti gambar jika perlu
+    icon: Zap, // Atau Utensils jika lebih cocok
+    link: '/features/tdee-calculator'
   }
 ];
 
@@ -62,7 +62,7 @@ const CategoryCards = ({ className }: CategoryCardsProps) => {
               onMouseLeave={() => setActiveCard(null)}
               onFocus={() => setActiveCard(category.id)}
               onBlur={() => setActiveCard(null)}
-              whileHover={{ y: -10, boxShadow: "0px 20px 30px -10px rgba(var(--primary-rgb, 255,255,255),0.3)"}}
+              whileHover={{ y: -10, boxShadow: "0px 20px 30px -10px rgba(var(--primary-rgb, 255,255,255),0.3)"}} // Asumsi --primary-rgb didefinisikan atau ganti dengan warna solid
               whileFocus={{ y: -10, boxShadow: "0px 20px 30px -10px rgba(var(--primary-rgb, 255,255,255),0.3)"}}
               transition={{ duration: 0.3, ease: "easeInOut" }}
               tabIndex={0}
@@ -96,7 +96,7 @@ const CategoryCards = ({ className }: CategoryCardsProps) => {
                 >
                   <p className="text-gray-300 mb-4 text-sm leading-relaxed">{category.description}</p>
                   <Link
-                    href={category.link || '#'}
+                    href={category.link}
                     className={cn(
                         "inline-flex items-center text-white font-semibold text-sm group/link",
                         activeCard !== category.id && "pointer-events-none"

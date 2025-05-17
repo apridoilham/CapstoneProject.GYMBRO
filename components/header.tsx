@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Menu, UserCircle, Dumbbell, XIcon, LogOut, LayoutDashboard, Sparkles, Info, Newspaper, ChevronDown, Calculator, Zap, Camera } from 'lucide-react'; // Tambahkan Camera
+import { Menu, UserCircle, Dumbbell, XIcon, LogOut, LayoutDashboard, Sparkles, Info, Newspaper, ChevronDown, Calculator, Zap, Camera, HomeIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,17 +34,16 @@ interface NavItem {
   label: string;
   icon?: React.ElementType;
   description?: string;
-  isFeature?: boolean;
 }
 
-const mainNavItems: NavItem[] = [
-  { href: "/", label: "Home", icon: LayoutDashboard },
+const mainNavItemsSorted: NavItem[] = [
+  { href: "/", label: "Home", icon: HomeIcon },
+  { href: "/food-analyzer", label: "Food Analyzer", icon: Camera },
   { href: "/blog", label: "Insights", icon: Newspaper },
-  { href: "/food-analyzer", label: "Food Analyzer", icon: Camera }, // FITUR UTAMA BARU
   { href: "/about", label: "About GYM BRO", icon: Info },
 ];
 
-const featureNavItems: NavItem[] = [
+const otherFeatureItems: NavItem[] = [
   { href: "/features/bmi-calculator", label: "BMI Calculator", icon: Calculator, description: "Quickly assess your Body Mass Index." },
   { href: "/features/tdee-calculator", label: "Calorie & TDEE Calculator", icon: Zap, description: "Estimate your TDEE and plan calorie goals." },
 ];
@@ -113,8 +112,7 @@ const Header = () => {
   const NavLink = ({ href, children, icon: Icon, isMobile = false, isActiveOverride, className }: { href: string; children: React.ReactNode; icon?: React.ElementType; isMobile?: boolean; isActiveOverride?: boolean; className?: string }) => {
     const isFeaturesPath = pathname.startsWith("/features");
     const isActive = isActiveOverride !== undefined ? isActiveOverride :
-                     (isFeaturesPath && href === "#features-dropdown") ? true : pathname === href;
-
+                     (isFeaturesPath && href === "#other-features-dropdown") ? true : pathname === href;
 
     return (
       <Link
@@ -191,7 +189,7 @@ const Header = () => {
 
           <NavigationMenu className="hidden md:flex">
             <NavigationMenuList>
-              {mainNavItems.map(item => (
+              {mainNavItemsSorted.slice(0, 2).map(item => ( // Home, Food Analyzer
                 <NavigationMenuItem key={item.label}>
                    <Link href={item.href} legacyBehavior passHref>
                     <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-sm font-medium", pathname === item.href ? "text-white" : "text-gray-300 hover:text-white")}>
@@ -207,7 +205,7 @@ const Header = () => {
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[380px] gap-3 p-4 md:w-[450px] md:grid-cols-1 lg:w-[500px] bg-zinc-900 border-zinc-700/80 shadow-xl rounded-lg">
-                    {featureNavItems.map((feature) => (
+                    {otherFeatureItems.map((feature) => (
                       <ListItem
                         key={feature.label}
                         title={feature.label}
@@ -220,6 +218,16 @@ const Header = () => {
                   </ul>
                 </NavigationMenuContent>
               </NavigationMenuItem>
+
+              {mainNavItemsSorted.slice(2).map(item => ( // Insights, About GYM BRO
+                <NavigationMenuItem key={item.label}>
+                   <Link href={item.href} legacyBehavior passHref>
+                    <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-sm font-medium", pathname === item.href ? "text-white" : "text-gray-300 hover:text-white")}>
+                      {item.icon && <item.icon size={16} className="mr-1.5 text-primary/80" />} {item.label}
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+              ))}
 
             {isLoggedIn && displayName ? (
               <>
@@ -292,11 +300,11 @@ const Header = () => {
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
             <div className="space-y-2.5 flex-grow overflow-y-auto pb-20 pt-4">
-                {mainNavItems.map(item => <NavLink key={item.href} href={item.href} icon={item.icon} isMobile>{item.label}</NavLink>)}
+                {mainNavItemsSorted.map(item => <NavLink key={item.href} href={item.href} icon={item.icon} isMobile>{item.label}</NavLink>)}
 
                 <Separator className="bg-zinc-700/80 my-3" />
                 <p className="px-4 pt-2 pb-1 text-sm font-semibold text-primary">Other Features</p>
-                {featureNavItems.map(item => <NavLink key={item.href} href={item.href} icon={item.icon} isMobile>{item.label}</NavLink>)}
+                {otherFeatureItems.map(item => <NavLink key={item.href} href={item.href} icon={item.icon} isMobile>{item.label}</NavLink>)}
 
                 <Separator className="bg-zinc-700/80 my-3" />
                 {isLoggedIn && displayName ? (

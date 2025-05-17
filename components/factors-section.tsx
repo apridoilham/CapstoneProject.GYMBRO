@@ -57,10 +57,10 @@ const FactorsSection = ({ className }: FactorsSectionProps) => {
             Your body is a complex system. GYM BRO helps you master the key variables—from metabolism to mindset—so you can stop guessing and start optimizing for a stronger, leaner you.
           </p>
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
           <div className="lg:col-span-3 space-y-6">
-            <motion.div 
+            <motion.div
               className="bg-zinc-800 p-6 md:p-8 rounded-lg shadow-xl"
               key={activeFactor}
               initial={{ opacity: 0.5, y: 20 }}
@@ -83,7 +83,7 @@ const FactorsSection = ({ className }: FactorsSectionProps) => {
               )}
             </motion.div>
           </div>
-          
+
           <div className="lg:col-span-2">
             <div className="bg-zinc-800/70 p-6 rounded-lg sticky top-28">
               <h3 className="text-lg font-semibold text-white mb-5">Explore Key Factors:</h3>
@@ -94,13 +94,15 @@ const FactorsSection = ({ className }: FactorsSectionProps) => {
                     onClick={() => setActiveFactor(factor.id)}
                     aria-label={`Learn more about ${factor.title}`}
                     className={cn(
-                      "p-3 rounded-lg flex flex-col items-center justify-center transition-all duration-300 aspect-square",
+                      "p-3 rounded-lg flex flex-col items-center justify-center transition-all duration-300 aspect-square focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900",
                       activeFactor === factor.id
                         ? "bg-white text-black scale-105 shadow-lg"
                         : "bg-zinc-700 text-gray-300 hover:bg-zinc-600 hover:text-white"
                     )}
                   >
-                    <factor.icon size={24} className={cn(activeFactor === factor.id ? "text-primary" : "")}/>
+                    <factor.icon size={24} className={cn(
+                      activeFactor === factor.id ? "text-black" : "text-primary" // PERUBAHAN DI SINI
+                    )}/>
                     <span className="text-xs mt-1.5 hidden sm:block lg:hidden xl:block">{factor.title.split(" ")[0]}</span>
                   </button>
                 ))}
