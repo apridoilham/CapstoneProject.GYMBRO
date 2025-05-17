@@ -1,49 +1,109 @@
+"use client";
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
+import { ArrowRight, ChevronDown, Camera } from 'lucide-react';
 
-interface HeroSectionProps {
-  className?: string;
-}
+const BroText = ({ children }: { children: React.ReactNode }) => (
+  <span className="bg-gradient-to-r from-bro-start to-bro-end text-transparent bg-clip-text">
+    {children}
+  </span>
+);
 
-const HeroSection = ({ className }: HeroSectionProps) => {
+const HeroSection = ({ className }: { className?: string }) => {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.25,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 25 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } },
+  };
+
   return (
-    <section className={cn("relative pt-32 pb-16 md:pt-40 md:pb-20 overflow-hidden bg-black", className)}>
-      <div className="container mx-auto px-4 md:px-8 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[calc(100vh-160px)] md:min-h-[calc(100vh-200px)] max-h-[700px] lg:max-h-[600px]">
-          <div className="space-y-6 text-center lg:text-left">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight">
-              Stop Guessing. Start <span className="text-primary">Gaining</span>.
-              This Is <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-300 to-gray-500">GYM BRO</span>.
-            </h1>
-            <p className="text-gray-300 text-md md:text-lg max-w-xl mx-auto lg:mx-0">
-              Tired of generic workouts and diet plans that don’t deliver? GYM BRO is your AI-powered fitness ally, decoding your body’s needs to craft hyper-personalized training and nutrition strategies.
-            </p>
-            <p className="text-gray-400 text-sm md:text-base max-w-xl mx-auto lg:mx-0">
-              Understand your unique physiology. Get actionable insights. Achieve your peak physical potential. It’s time to train smarter, not just harder.
-            </p>
-            <div className="pt-6 flex flex-col sm:flex-row sm:justify-center lg:justify-start gap-4">
-              <Button asChild size="lg" className="bg-white text-black hover:bg-gray-200 px-8 py-3 text-base font-semibold tracking-wide">
-                <Link href="/register">Join the Movement</Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="text-white border-white hover:bg-white/10 hover:text-white px-8 py-3 text-base font-semibold tracking-wide">
-                <Link href="/about">Discover GYM BRO</Link>
-              </Button>
-            </div>
-          </div>
-          <div className="relative h-[350px] md:h-[450px] lg:h-[550px] w-full rounded-lg overflow-hidden shadow-2xl">
-            <Image
-              src="https://images.pexels.com/photos/1552242/pexels-photo-1552242.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
-              alt="Man lifting weights in a gym, embodying the GYM BRO spirit"
-              fill
-              className="object-cover object-center"
-              priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
-          </div>
-        </div>
+    <section
+      className={cn(
+        "relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-black text-white px-4 pt-32 pb-20 md:pt-40 md:pb-24",
+        className
+      )}
+    >
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1280&dpr=2"
+          alt="Focused individual in a modern gym environment"
+          fill
+          className="object-cover opacity-25" // <--- UBAH NILAI OPACITY DI SINI
+          priority
+          quality={75} // Bisa dinaikkan sedikit jika opacity lebih tinggi, misal 80
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/70 to-black"></div>
       </div>
+
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="container mx-auto relative z-10 text-center flex flex-col items-center max-w-4xl"
+      >
+        <motion.h1
+          variants={itemVariants}
+          className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-none tracking-tighter mb-8"
+        >
+          Precision Fitness.
+          <br />
+          AI-Driven <BroText>Results</BroText>.
+        </motion.h1>
+
+        <motion.p
+          variants={itemVariants}
+          className="text-lg md:text-xl text-gray-400 mb-12 max-w-xl"
+        >
+          GYM <BroText>BRO</BroText> delivers hyper-personalized training and nutrition strategies,
+          intelligently crafted by AI to unlock your peak physical potential.
+        </motion.p>
+
+        <motion.div variants={itemVariants} className="flex justify-center gap-x-4 gap-y-3 flex-wrap">
+          <Button
+            asChild
+            size="lg"
+            className="bg-primary text-primary-foreground hover:bg-primary/80 font-semibold px-8 py-3 text-md md:text-lg rounded-md shadow-lg hover:shadow-primary/25 transition-all duration-300 transform hover:scale-105 group"
+          >
+            <Link href="/register">
+              Begin Your Journey <ArrowRight size={18} className="ml-2 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="border-zinc-700 text-gray-300 hover:bg-zinc-800 hover:text-white hover:border-zinc-600 px-8 py-3 text-md md:text-lg font-semibold rounded-md transition-all duration-300 transform hover:scale-105 group"
+          >
+            <Link href="/food-analyzer">
+              Analyze Food <Camera size={18} className="ml-2 group-hover:opacity-75 transition-opacity" />
+            </Link>
+          </Button>
+        </motion.div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.8, duration: 1 }}
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 text-gray-700 hover:text-gray-500 transition-colors"
+        aria-hidden="true"
+      >
+        <ChevronDown size={28} className="animate-bounce opacity-50"/>
+      </motion.div>
     </section>
   );
 };

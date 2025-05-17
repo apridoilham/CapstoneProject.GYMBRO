@@ -1,119 +1,125 @@
-"use client"
+"use client";
 
-import { useState } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { Brain, Dumbbell, Utensils, Calculator, Zap, Camera, TrendingUp } from 'lucide-react';
+import { Camera, Calculator, Zap as CalorieIcon, ArrowRight } from 'lucide-react';
 
-interface CategoryCardsProps {
-  className?: string;
+interface CategoryCardItem {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  icon: React.ElementType;
+  link: string;
+  cta: string;
 }
 
-const gymBroCategories = [
+const gymBroCategories: CategoryCardItem[] = [
   {
     id: 'food-analyzer',
-    title: 'AI Food Analyzer',
-    description: 'Snap a pic of your meal! Our AI identifies food and estimates nutritional content to keep you on track.',
-    image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2', // Ganti gambar jika perlu
+    title: 'AI Food Vision',
+    description: 'Snap. Analyze. Optimize. Instant macro and calorie insights from your meal photos for precision fueling.',
+    image: 'https://images.pexels.com/photos/1640774/pexels-photo-1640774.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
     icon: Camera,
-    link: '/food-analyzer' // Path ke fitur utama Food Analyzer
-  },
-  {
-    id: 'bmi-calculator',
-    title: 'BMI Calculator',
-    description: 'Quickly assess your Body Mass Index and understand your current weight category with our simple tool.',
-    image: 'https://images.pexels.com/photos/40751/running-runner-long-distance-fitness-40751.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2', // Ganti gambar jika perlu
-    icon: Calculator,
-    link: '/features/bmi-calculator'
+    link: '/food-analyzer',
+    cta: 'Analyze Meal'
   },
   {
     id: 'tdee-calculator',
-    title: 'Calorie & TDEE Planner',
-    description: 'Estimate your daily calorie needs (TDEE) and plan your intake for weight maintenance, loss, or gain.',
-    image: 'https://images.pexels.com/photos/1128318/pexels-photo-1128318.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2', // Ganti gambar jika perlu
-    icon: Zap, // Atau Utensils jika lebih cocok
-    link: '/features/tdee-calculator'
+    title: 'Caloric Blueprint',
+    description: 'Calculate your precise TDEE & BMR. Strategize calorie intake for effective, sustainable results.',
+    image: 'https://images.pexels.com/photos/3766111/pexels-photo-3766111.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    icon: CalorieIcon,
+    link: '/features/tdee-calculator',
+    cta: 'Plan Your Intake'
+  },
+  {
+    id: 'bmi-calculator',
+    title: 'Composition Metric',
+    description: 'Assess your Body Mass Index quickly. A foundational metric to track and understand your fitness journey.',
+    image: 'https://images.pexels.com/photos/38630/bodybuilder-weight-training-stress-38630.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    icon: Calculator,
+    link: '/features/bmi-calculator',
+    cta: 'Check Your BMI'
   }
 ];
 
-const CategoryCards = ({ className }: CategoryCardsProps) => {
-  const [activeCard, setActiveCard] = useState<string | null>(null);
+const CategoryCards = ({ className }: { className?: string }) => {
+  const cardVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.1,
+        duration: 0.7,
+        ease: [0.42, 0, 0.58, 1] // Ease-in-out
+      }
+    })
+  };
 
   return (
-    <section className={cn("py-16 md:py-24 bg-black", className)}>
+    <section className={cn("py-20 md:py-28 bg-black text-white", className)}>
       <div className="container mx-auto px-4 md:px-8">
-        <div className="text-center mb-12 md:mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-white">
-            The <span className="text-primary">GYM BRO</span> Edge
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+          className="text-center mb-16 md:mb-20 max-w-3xl mx-auto"
+        >
+          <h2 className="text-4xl md:text-5xl font-extrabold mb-5 tracking-tight">
+            Intelligent Fitness <span className="bg-gradient-to-r from-bro-start to-bro-end text-transparent bg-clip-text">Tools</span>
           </h2>
-          <p className="text-gray-300 mt-4 max-w-xl mx-auto text-md md:text-lg">
-            Discover how our core features deliver a fitness experience unlike any other.
+          <p className="text-lg md:text-xl text-gray-400">
+            Engineered for precision, designed for results. Explore the core of GYM BRO's AI-powered platform.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {gymBroCategories.map((category, index) => (
             <motion.div
               key={category.id}
-              className="relative rounded-xl overflow-hidden group shadow-2xl bg-zinc-900 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 focus-within:ring-offset-black"
-              onMouseEnter={() => setActiveCard(category.id)}
-              onMouseLeave={() => setActiveCard(null)}
-              onFocus={() => setActiveCard(category.id)}
-              onBlur={() => setActiveCard(null)}
-              whileHover={{ y: -10, boxShadow: "0px 20px 30px -10px rgba(var(--primary-rgb, 255,255,255),0.3)"}} // Asumsi --primary-rgb didefinisikan atau ganti dengan warna solid
-              whileFocus={{ y: -10, boxShadow: "0px 20px 30px -10px rgba(var(--primary-rgb, 255,255,255),0.3)"}}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              tabIndex={0}
-              role="group"
-              aria-labelledby={`category-title-${category.id}`}
+              custom={index}
+              variants={cardVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              className="group relative flex flex-col bg-zinc-900 rounded-2xl overflow-hidden shadow-xl border-2 border-zinc-800 hover:border-primary/40 transition-all duration-300 ease-in-out hover:shadow-primary/10"
             >
-              <div className="aspect-[16/10] relative">
+              <div className="relative w-full aspect-[16/9] overflow-hidden">
                 <Image
                   src={category.image}
                   alt={category.title}
                   fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105 group-focus-within:scale-105"
+                  className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+                <div className="absolute top-5 right-5 p-3 bg-black/50 backdrop-blur-sm rounded-full">
+                    <category.icon className="h-6 w-6 text-primary"/>
+                </div>
               </div>
 
-              <div className="absolute inset-0 p-6 flex flex-col justify-end">
-                <div className="mb-3">
-                  <category.icon className="h-10 w-10 text-primary mb-2"/>
-                </div>
-                <h3 id={`category-title-${category.id}`} className="text-2xl font-semibold text-white mb-2">{category.title}</h3>
-
-                <div
+              <div className="p-6 flex flex-col flex-grow">
+                <h3 className="text-xl lg:text-2xl font-semibold text-white mb-3 leading-tight">
+                  {category.title}
+                </h3>
+                <p className="text-gray-400 text-sm mb-6 leading-relaxed flex-grow min-h-[84px]">
+                  {category.description}
+                </p>
+                <Link
+                  href={category.link}
                   className={cn(
-                    "transition-all duration-300 ease-in-out",
-                    activeCard === category.id ? "max-h-40 opacity-100 mt-1" : "max-h-0 opacity-0"
+                    "mt-auto inline-flex items-center justify-center text-center font-medium text-sm py-3 px-5 rounded-md transition-all duration-300 w-full",
+                    "bg-primary text-primary-foreground hover:bg-primary/80 group-hover:shadow-lg group-hover:shadow-primary/30"
                   )}
-                  style={{ overflow: 'hidden' }}
-                  aria-hidden={activeCard !== category.id}
                 >
-                  <p className="text-gray-300 mb-4 text-sm leading-relaxed">{category.description}</p>
-                  <Link
-                    href={category.link}
-                    className={cn(
-                        "inline-flex items-center text-white font-semibold text-sm group/link",
-                        activeCard !== category.id && "pointer-events-none"
-                    )}
-                    tabIndex={activeCard === category.id ? 0 : -1}
-                  >
-                    Explore Feature <TrendingUp size={18} className="ml-1.5 transition-transform duration-300 group-hover/link:translate-x-1 group-focus/link:translate-x-1" />
-                  </Link>
-                </div>
-              </div>
-
-              <div className={cn(
-                  "absolute top-4 right-4 w-10 h-10 bg-white/10 text-white backdrop-blur-sm rounded-full flex items-center justify-center text-sm font-bold transition-opacity duration-300",
-                  activeCard === category.id ? "opacity-0" : "opacity-100"
-                )}
-              >
-                0{index + 1}
+                  {category.cta} <ArrowRight size={16} className="ml-2 transition-transform group-hover:translate-x-1" />
+                </Link>
               </div>
             </motion.div>
           ))}

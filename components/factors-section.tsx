@@ -1,115 +1,118 @@
-"use client"
+"use client";
 
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
-import { Zap, Apple, BedDouble, Brain, Dumbbell } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Brain, Dumbbell, Leaf, Moon } from 'lucide-react'; // Ikon yang lebih netral
 
-interface FactorsSectionProps {
-  className?: string;
+interface FactorItem {
+  id: number;
+  icon: React.ElementType;
+  title: string;
+  content: string;
 }
 
-const factorsData = [
+const factorsData: FactorItem[] = [
   {
     id: 1,
     icon: Brain,
-    title: "Your Unique Metabolism",
-    content: "Your metabolic rate is the engine driving your results. GYM BRO helps you understand how your body processes energy, accounting for genetics, muscle mass, and overall health to tailor your plan."
+    title: "Intelligent Analysis",
+    content: "Our AI meticulously analyzes your unique physiological data to create a precise, adaptive foundation for your fitness journey."
   },
   {
     id: 2,
-    icon: Apple,
-    title: "Precision Nutrition",
-    content: "Fuel your gains, don't fight your food. We move beyond generic diet advice to pinpoint the optimal macronutrient balance and caloric intake your body truly needs to build muscle and burn fat."
+    icon: Dumbbell,
+    title: "Adaptive Training",
+    content: "Experience training protocols that evolve with you. Dynamic adjustments ensure continuous progress towards your specific goals."
   },
   {
     id: 3,
-    icon: Dumbbell,
-    title: "Hyper-Effective Training",
-    content: "Stop wasting time on ineffective routines. GYM BRO analyzes your goals and physical profile to prescribe workouts that maximize every rep, every set, for real, measurable progress."
+    icon: Leaf,
+    title: "Optimized Nutrition",
+    content: "Fuel your ambition with data-driven nutrition. Strategic meal composition supports your training and accelerates results."
   },
   {
     id: 4,
-    icon: BedDouble,
-    title: "Recovery & Sleep Science",
-    content: "Growth happens when you rest. We factor in sleep quality and recovery patterns, understanding their impact on hormones and muscle repair, ensuring you come back stronger."
+    icon: Moon,
+    title: "Holistic Recovery",
+    content: "Peak performance is built on superior recovery. We integrate sleep optimization and stress management for a stronger you."
   },
-  {
-    id: 5,
-    icon: Zap,
-    title: "Stress & Lifestyle Impact",
-    content: "Life throws curveballs. Chronic stress can sabotage your progress. GYM BRO provides strategies to manage lifestyle stressors, keeping your body primed for peak performance."
-  }
 ];
 
-const FactorsSection = ({ className }: FactorsSectionProps) => {
-  const [activeFactor, setActiveFactor] = useState(1);
-  const currentFactor = factorsData.find(f => f.id === activeFactor);
+const FactorsSection = ({ className }: { className?: string }) => {
+  const [hoveredFactorId, setHoveredFactorId] = useState<number | null>(null);
+
+  const sectionVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+  };
 
   return (
-    <section className={cn("py-16 md:py-24 bg-zinc-900", className)}>
+    <section id="factors" className={cn("py-20 md:py-28 bg-zinc-950 text-white", className)}>
       <div className="container mx-auto px-4 md:px-8">
-        <div className="text-center mb-12 md:mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-white">
-            Unlock the Science Behind <span className="text-primary">Your</span> Physique
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+          className="text-center mb-16 md:mb-20 max-w-3xl mx-auto"
+        >
+          <h2 className="text-4xl md:text-5xl font-extrabold mb-5 tracking-tight">
+            The <span className="bg-gradient-to-r from-bro-start to-bro-end text-transparent bg-clip-text">GYM BRO</span> Ethos
           </h2>
-          <p className="text-gray-300 mt-4 max-w-2xl mx-auto text-md md:text-lg">
-            Your body is a complex system. GYM BRO helps you master the key variables—from metabolism to mindset—so you can stop guessing and start optimizing for a stronger, leaner you.
+          <p className="text-lg md:text-xl text-gray-400">
+            A sophisticated, AI-driven approach to understanding and transforming your physique. Discover the core pillars of your personalized success.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
-          <div className="lg:col-span-3 space-y-6">
+        <motion.div
+          variants={sectionVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.1 }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
+        >
+          {factorsData.map((factor) => (
             <motion.div
-              className="bg-zinc-800 p-6 md:p-8 rounded-lg shadow-xl"
-              key={activeFactor}
-              initial={{ opacity: 0.5, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4, ease: "easeInOut" }}
-            >
-              {currentFactor && (
-                <>
-                  <div className="flex items-center mb-4">
-                    <currentFactor.icon className="h-7 w-7 text-primary mr-3" />
-                    <h3 className="text-xl md:text-2xl font-semibold text-white">
-                      {currentFactor.title}
-                    </h3>
-                  </div>
-                  <p className="text-gray-300 leading-relaxed">
-                    {currentFactor.content}
-                  </p>
-                </>
+              key={factor.id}
+              variants={itemVariants}
+              onMouseEnter={() => setHoveredFactorId(factor.id)}
+              onMouseLeave={() => setHoveredFactorId(null)}
+              className={cn(
+                "p-6 py-8 rounded-xl border-2 transition-all duration-300 ease-in-out transform hover:-translate-y-2 cursor-default",
+                hoveredFactorId === factor.id
+                  ? "bg-zinc-800 border-primary shadow-2xl shadow-primary/10"
+                  : "bg-zinc-900 border-zinc-700 hover:border-zinc-600"
               )}
-            </motion.div>
-          </div>
-
-          <div className="lg:col-span-2">
-            <div className="bg-zinc-800/70 p-6 rounded-lg sticky top-28">
-              <h3 className="text-lg font-semibold text-white mb-5">Explore Key Factors:</h3>
-              <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-3 gap-3">
-                {factorsData.map((factor) => (
-                  <button
-                    key={factor.id}
-                    onClick={() => setActiveFactor(factor.id)}
-                    aria-label={`Learn more about ${factor.title}`}
-                    className={cn(
-                      "p-3 rounded-lg flex flex-col items-center justify-center transition-all duration-300 aspect-square focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900",
-                      activeFactor === factor.id
-                        ? "bg-white text-black scale-105 shadow-lg"
-                        : "bg-zinc-700 text-gray-300 hover:bg-zinc-600 hover:text-white"
-                    )}
-                  >
-                    <factor.icon size={24} className={cn(
-                      activeFactor === factor.id ? "text-black" : "text-primary" // PERUBAHAN DI SINI
-                    )}/>
-                    <span className="text-xs mt-1.5 hidden sm:block lg:hidden xl:block">{factor.title.split(" ")[0]}</span>
-                  </button>
-                ))}
+            >
+              <div className="flex justify-center mb-5">
+                <div className={cn(
+                    "p-4 rounded-full transition-all duration-300",
+                    hoveredFactorId === factor.id ? "bg-primary/10" : "bg-zinc-800"
+                )}>
+                    <factor.icon
+                    size={32}
+                    className={cn(hoveredFactorId === factor.id ? "text-primary" : "text-gray-400 group-hover:text-primary/90 transition-colors")}
+                    />
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
+              <h3 className={cn(
+                  "text-xl font-semibold mb-3 text-center",
+                  hoveredFactorId === factor.id ? "text-primary" : "text-white"
+              )}>
+                {factor.title}
+              </h3>
+              <p className="text-sm text-gray-400 leading-relaxed text-center">
+                {factor.content}
+              </p>
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
     </section>
   );

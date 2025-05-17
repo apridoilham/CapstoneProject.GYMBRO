@@ -54,72 +54,51 @@ const config: Config = {
           '4': 'hsl(var(--chart-4))',
           '5': 'hsl(var(--chart-5))',
         },
+        'bro-start': 'hsl(var(--primary) / 0.8)',
+        'bro-end': 'hsl(var(--primary) / 0.5)',
       },
       keyframes: {
         'accordion-down': {
-          from: {
-            height: '0px',
-          },
-          to: {
-            height: 'var(--radix-accordion-content-height)',
-          },
+          from: { height: '0px' },
+          to: { height: 'var(--radix-accordion-content-height)' },
         },
         'accordion-up': {
-          from: {
-            height: 'var(--radix-accordion-content-height)',
-          },
-          to: {
-            height: '0px',
-          },
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: '0px' },
+        },
+        'fade-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        'fade-in-up': {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'slow-pulse': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '.7' },
         },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'fade-in': 'fade-in 0.9s ease-out forwards',
+        'fade-in-up': 'fade-in-up 0.9s ease-out forwards',
+        'slow-pulse': 'slow-pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
-      typography: ({ theme }: { theme: Function }) => ({ // Tambahkan/pastikan bagian ini ada
+      typography: ({ theme }: { theme: Function }) => ({
         DEFAULT: {
           css: {
-            '--tw-prose-body': theme('colors.gray[300]'),
-            '--tw-prose-headings': theme('colors.white'),
-            '--tw-prose-lead': theme('colors.gray[200]'),
-            '--tw-prose-links': theme('colors.primary.DEFAULT'),
-            '--tw-prose-bold': theme('colors.white'),
-            '--tw-prose-counters': theme('colors.gray[400]'),
-            '--tw-prose-bullets': theme('colors.primary.DEFAULT'),
-            '--tw-prose-hr': theme('colors.border'),
-            '--tw-prose-quotes': theme('colors.gray[400]'),
-            '--tw-prose-quote-borders': theme('colors.primary.DEFAULT'),
-            '--tw-prose-captions': theme('colors.gray[500]'),
-            '--tw-prose-code': theme('colors.white'),
-            '--tw-prose-pre-code': theme('colors.gray[300]'),
-            '--tw-prose-pre-bg': theme('colors.zinc[800]'),
-            '--tw-prose-th-borders': theme('colors.border'),
-            '--tw-prose-td-borders': theme('colors.border'),
-            '--tw-prose-invert-body': theme('colors.gray[300]'),
-            '--tw-prose-invert-headings': theme('colors.white'),
-            '--tw-prose-invert-lead': theme('colors.gray[200]'),
-            '--tw-prose-invert-links': theme('colors.primary.DEFAULT'),
-            '--tw-prose-invert-bold': theme('colors.white'),
-            '--tw-prose-invert-counters': theme('colors.gray[400]'),
-            '--tw-prose-invert-bullets': theme('colors.primary.DEFAULT'),
-            '--tw-prose-invert-hr': theme('colors.border'),
-            '--tw-prose-invert-quotes': theme('colors.gray[400]'),
-            '--tw-prose-invert-quote-borders': theme('colors.primary.DEFAULT'),
-            '--tw-prose-invert-captions': theme('colors.gray[500]'),
-            '--tw-prose-invert-code': theme('colors.white'),
-            '--tw-prose-invert-pre-code': theme('colors.gray[300]'),
-            '--tw-prose-invert-pre-bg': 'rgb(0 0 0 / 50%)',
-            '--tw-prose-invert-th-borders': theme('colors.border'),
-            '--tw-prose-invert-td-borders': theme('colors.border'),
-            p: {
-              lineHeight: theme('leading.relaxed'),
-            },
-            '.lead': {
-              fontSize: theme('fontSize.xl'),
-              lineHeight: theme('lineHeight.snug'),
-              marginBottom: theme('spacing.6'),
-            },
+            '--tw-prose-body': 'hsl(var(--muted-foreground))',
+            '--tw-prose-headings': 'hsl(var(--foreground))',
+            '--tw-prose-lead': 'hsl(var(--foreground))',
+            '--tw-prose-links': 'hsl(var(--primary))',
+            '--tw-prose-bold': 'hsl(var(--foreground))',
+            '--tw-prose-hr': 'hsl(var(--border))',
+             h1: { color: 'hsl(var(--foreground))', fontWeight: '800'},
+             h2: { color: 'hsl(var(--foreground))', fontWeight: '700'},
+             h3: { color: 'hsl(var(--foreground))', fontWeight: '600'},
+             p: { color: 'hsl(var(--muted-foreground))', lineHeight: '1.75' },
           },
         },
       }),
@@ -127,7 +106,7 @@ const config: Config = {
   },
   plugins: [
     require('tailwindcss-animate'),
-    require('@tailwindcss/typography') // Pastikan ini ada
+    require('@tailwindcss/typography')
   ],
 };
 export default config;
