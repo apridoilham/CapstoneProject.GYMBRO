@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Calculator, Smile, Meh, Frown, TrendingUp, ArrowLeft, Loader2, ClipboardList, InfoIcon } from 'lucide-react';
+import { Calculator, Smile, Meh, Frown, TrendingUp, ArrowLeft, Loader2, ClipboardList, InfoIcon, HomeIcon } from 'lucide-react'; // Tambahkan HomeIcon
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -80,7 +80,6 @@ const BmiFigureDisplay = ({ currentBmi, gender }: { currentBmi: number | null; g
     if (baseName) {
       const genderSuffix = genderForImage.charAt(0).toUpperCase() + genderForImage.slice(1);
       const potentialPath = `/images/bmi/${baseName}${genderSuffix}.svg`;
-
       imagePathToDisplay = potentialPath;
       altText = `${categoryLabel} ${genderForImage} body figure`;
     }
@@ -306,9 +305,9 @@ export default function BmiCalculatorClient() {
             transition={{ duration: 0.6, ease: "circOut" }}
         >
             <div className="mb-8 md:mb-10">
-                <Link href="/features" className="inline-flex items-center text-primary hover:text-primary/80 group text-sm font-medium transition-colors">
-                <ArrowLeft size={16} className="mr-1.5 transition-transform duration-200 group-hover:-translate-x-0.5" />
-                Back to Features
+                <Link href="/" className="inline-flex items-center text-primary hover:text-primary/80 group text-sm font-medium transition-colors">
+                <HomeIcon size={16} className="mr-1.5 transition-transform duration-200 group-hover:-translate-x-0.5" />
+                Back to Home
                 </Link>
             </div>
           <header className="text-center mb-12 md:mb-16">

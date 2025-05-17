@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Menu, UserCircle, Dumbbell, XIcon, LogOut, LayoutDashboard, Sparkles, Info, Newspaper, ChevronDown, Calculator } from 'lucide-react';
+import { Menu, UserCircle, Dumbbell, XIcon, LogOut, LayoutDashboard, Sparkles, Info, Newspaper, ChevronDown, Calculator, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,7 +21,6 @@ import {
 
 type GenderType = "male" | "female" | "other" | "prefer_not_to_say";
 
-// Data profil dummy awal untuk disimpan saat simulate login
 const DUMMY_INITIAL_PROFILE_DATA = {
   name: 'Aprido Ilham',
   username: 'ApridoIlham',
@@ -45,21 +44,22 @@ const mainNavItems: NavItem[] = [
 
 const featureNavItems: NavItem[] = [
   { href: "/features/bmi-calculator", label: "BMI Calculator", icon: Calculator, description: "Quickly assess your Body Mass Index." },
+  { href: "/features/tdee-calculator", label: "Calorie & TDEE Calculator", icon: Zap, description: "Estimate your TDEE and plan calorie goals." },
 ];
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); 
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const pathname = usePathname();
   const headerRef = useRef<HTMLElement>(null);
-  const [headerActualHeight, setHeaderActualHeight] = useState(0); 
+  const [headerActualHeight, setHeaderActualHeight] = useState(0);
 
   useEffect(() => {
     const storedLoginStatus = localStorage.getItem('isLoggedInGYMBRO');
     const storedProfileString = localStorage.getItem('gymBroUserProfile');
-    
+
     if (storedLoginStatus === 'true') {
       setIsLoggedIn(true);
       if (storedProfileString) {
@@ -71,7 +71,7 @@ const Header = () => {
           setDisplayName(DUMMY_INITIAL_PROFILE_DATA.name.split(" ")[0]);
         }
       } else {
-        setDisplayName(DUMMY_INITIAL_PROFILE_DATA.name.split(" ")[0]); 
+        setDisplayName(DUMMY_INITIAL_PROFILE_DATA.name.split(" ")[0]);
       }
     }
   }, []);
@@ -84,7 +84,7 @@ const Header = () => {
 
   useEffect(() => {
     if (headerRef.current) setHeaderActualHeight(headerRef.current.offsetHeight);
-  }, [isScrolled, isMenuOpen, pathname]); 
+  }, [isScrolled, isMenuOpen, pathname]);
 
   useEffect(() => {
     document.body.style.overflow = isMenuOpen ? 'hidden' : 'auto';
@@ -94,7 +94,7 @@ const Header = () => {
   const handleLoginLogout = () => {
     const newLoginStatus = !isLoggedIn;
     setIsLoggedIn(newLoginStatus);
-    setIsMenuOpen(false); 
+    setIsMenuOpen(false);
     if (newLoginStatus) {
       localStorage.setItem('isLoggedInGYMBRO', 'true');
       localStorage.setItem('gymBroUserProfile', JSON.stringify(DUMMY_INITIAL_PROFILE_DATA));
@@ -105,19 +105,20 @@ const Header = () => {
       setDisplayName(null);
     }
   };
-  
+
   const closeMenuOnly = () => setIsMenuOpen(false);
 
   const NavLink = ({ href, children, icon: Icon, isMobile = false, isActiveOverride, className }: { href: string; children: React.ReactNode; icon?: React.ElementType; isMobile?: boolean; isActiveOverride?: boolean; className?: string }) => {
-    const isActive = isActiveOverride !== undefined ? isActiveOverride : pathname === href || (href.startsWith("/features") && pathname.startsWith("/features"));
+    const isActive = isActiveOverride !== undefined ? isActiveOverride : pathname === href || (href.startsWith("/features") && pathname.startsWith("/features") && href !== "/features/bmi-calculator" && href !== "/features/tdee-calculator" ? pathname === "/features" : pathname === href);
+
     return (
       <Link
         href={href}
         onClick={closeMenuOnly}
         className={cn(
           "transition-colors duration-200 font-medium flex items-center gap-2 group",
-          isMobile 
-            ? "text-xl py-4 px-4 rounded-lg hover:bg-zinc-800/70 w-full" 
+          isMobile
+            ? "text-xl py-4 px-4 rounded-lg hover:bg-zinc-800/70 w-full"
             : "text-sm relative pb-1 hover:text-white",
           isActive && !isMobile ? "text-white" : "text-gray-300",
           isActive && isMobile ? "bg-primary text-primary-foreground font-semibold" : "text-gray-200 hover:text-white",
@@ -135,7 +136,7 @@ const Header = () => {
       </Link>
     );
   };
-  
+
   const ListItem = React.forwardRef<
     React.ElementRef<"a">,
     React.ComponentPropsWithoutRef<"a"> & { title: string, icon?: React.ElementType }
@@ -276,9 +277,9 @@ const Header = () => {
         {isMenuOpen && (
           <motion.div
             className="md:hidden fixed inset-x-0 bg-black/95 backdrop-blur-xl p-6 flex flex-col z-[55]"
-            style={{ 
-              top: `${headerActualHeight}px`, 
-              height: `calc(100vh - ${headerActualHeight}px)` 
+            style={{
+              top: `${headerActualHeight}px`,
+              height: `calc(100vh - ${headerActualHeight}px)`
             }}
             initial={{ opacity: 0, y: "-100%" }}
             animate={{ opacity: 1, y: "0%" }}
@@ -287,11 +288,11 @@ const Header = () => {
           >
             <div className="space-y-2.5 flex-grow overflow-y-auto pb-20 pt-4">
                 {mainNavItems.map(item => <NavLink key={item.href} href={item.href} icon={item.icon} isMobile>{item.label}</NavLink>)}
-                
+
                 <Separator className="bg-zinc-700/80 my-3" />
                 <p className="px-4 pt-2 pb-1 text-sm font-semibold text-primary">Features</p>
                 {featureNavItems.map(item => <NavLink key={item.href} href={item.href} icon={item.icon} isMobile>{item.label}</NavLink>)}
-                
+
                 <Separator className="bg-zinc-700/80 my-3" />
                 {isLoggedIn && displayName ? (
                     <>
@@ -313,7 +314,7 @@ const Header = () => {
                     </>
                 )}
             </div>
-            
+
             {!isLoggedIn && (
                 <div className="pt-4 mt-auto border-t border-zinc-700/80">
                     <Button onClick={handleLoginLogout} variant="secondary" size="lg" className="w-full text-sm py-3 bg-zinc-700 hover:bg-zinc-600 text-gray-300">
