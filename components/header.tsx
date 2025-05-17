@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Menu, UserCircle, Dumbbell, XIcon, LogOut, LayoutDashboard, Sparkles, Info, Newspaper, ChevronDown, Calculator, Zap } from 'lucide-react';
+import { Menu, UserCircle, Dumbbell, XIcon, LogOut, LayoutDashboard, Sparkles, Info, Newspaper, ChevronDown, Calculator, Zap, Camera } from 'lucide-react'; // Tambahkan Camera
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,11 +34,13 @@ interface NavItem {
   label: string;
   icon?: React.ElementType;
   description?: string;
+  isFeature?: boolean;
 }
 
 const mainNavItems: NavItem[] = [
   { href: "/", label: "Home", icon: LayoutDashboard },
   { href: "/blog", label: "Insights", icon: Newspaper },
+  { href: "/food-analyzer", label: "Food Analyzer", icon: Camera }, // FITUR UTAMA BARU
   { href: "/about", label: "About GYM BRO", icon: Info },
 ];
 
@@ -109,7 +111,10 @@ const Header = () => {
   const closeMenuOnly = () => setIsMenuOpen(false);
 
   const NavLink = ({ href, children, icon: Icon, isMobile = false, isActiveOverride, className }: { href: string; children: React.ReactNode; icon?: React.ElementType; isMobile?: boolean; isActiveOverride?: boolean; className?: string }) => {
-    const isActive = isActiveOverride !== undefined ? isActiveOverride : pathname === href || (href.startsWith("/features") && pathname.startsWith("/features") && href !== "/features/bmi-calculator" && href !== "/features/tdee-calculator" ? pathname === "/features" : pathname === href);
+    const isFeaturesPath = pathname.startsWith("/features");
+    const isActive = isActiveOverride !== undefined ? isActiveOverride :
+                     (isFeaturesPath && href === "#features-dropdown") ? true : pathname === href;
+
 
     return (
       <Link
@@ -198,7 +203,7 @@ const Header = () => {
 
               <NavigationMenuItem>
                 <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(),"bg-transparent text-sm font-medium data-[state=open]:bg-zinc-800/50 data-[state=open]:text-white", pathname.startsWith("/features") ? "text-white" : "text-gray-300 hover:text-white")}>
-                    <Sparkles size={16} className="mr-1.5 text-primary/80" /> Features
+                    <Sparkles size={16} className="mr-1.5 text-primary/80" /> Other Features
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[380px] gap-3 p-4 md:w-[450px] md:grid-cols-1 lg:w-[500px] bg-zinc-900 border-zinc-700/80 shadow-xl rounded-lg">
@@ -290,7 +295,7 @@ const Header = () => {
                 {mainNavItems.map(item => <NavLink key={item.href} href={item.href} icon={item.icon} isMobile>{item.label}</NavLink>)}
 
                 <Separator className="bg-zinc-700/80 my-3" />
-                <p className="px-4 pt-2 pb-1 text-sm font-semibold text-primary">Features</p>
+                <p className="px-4 pt-2 pb-1 text-sm font-semibold text-primary">Other Features</p>
                 {featureNavItems.map(item => <NavLink key={item.href} href={item.href} icon={item.icon} isMobile>{item.label}</NavLink>)}
 
                 <Separator className="bg-zinc-700/80 my-3" />
