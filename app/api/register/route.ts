@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 		await UsersModel.create(newUser);
 
 		return NextResponse.json(
-			{ message: "Registration successful." },
+			{ message: "Registration successful.", success: true },
 			{ status: 201 }
 		);
 	} catch (error) {

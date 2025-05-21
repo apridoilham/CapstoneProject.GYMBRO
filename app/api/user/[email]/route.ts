@@ -26,7 +26,7 @@ export async function GET(
 		const finalData = {
 			email: user.email,
 			fullName: user.fullName,
-			date: user.data ?? null,
+			date: user.date ?? null,
 			age: user.age ?? null,
 			gender: user.gender ?? null,
 			height: user.height ?? null,
