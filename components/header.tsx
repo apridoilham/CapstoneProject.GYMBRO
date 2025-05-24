@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Menu, UserCircle, Dumbbell, XIcon, LogOut, LayoutDashboard, Sparkles, Info, Newspaper, ChevronDown, Calculator, Zap, Camera, HomeIcon } from 'lucide-react';
+import { Menu, UserCircle, Dumbbell, XIcon, LogOut, LayoutDashboard, Sparkles, Info, Newspaper, ChevronDown, Calculator, Zap, Camera, HomeIcon, Apple } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -38,9 +38,14 @@ interface NavItem {
 
 const mainNavItemsSorted: NavItem[] = [
   { href: "/", label: "Home", icon: HomeIcon },
-  { href: "/food-analyzer", label: "Food Analyzer", icon: Camera },
   { href: "/blog", label: "Insights", icon: Newspaper },
   { href: "/about", label: "About GYM BRO", icon: Info },
+];
+
+// Nutrition items grouped together
+const nutritionItems: NavItem[] = [
+  { href: "/food-analyzer", label: "Food Analyzer", icon: Camera, description: "Analyze nutritional content of your food." },
+  { href: "/food-recommendation", label: "Food Recommendation", icon: Apple, description: "Get personalized food recommendations based on your goals." },
 ];
 
 const otherFeatureItems: NavItem[] = [
@@ -189,19 +194,42 @@ const Header = () => {
 
           <NavigationMenu className="hidden md:flex">
             <NavigationMenuList>
-              {mainNavItemsSorted.slice(0, 2).map(item => ( // Home, Food Analyzer
-                <NavigationMenuItem key={item.label}>
-                   <Link href={item.href} legacyBehavior passHref>
-                    <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-sm font-medium", pathname === item.href ? "text-white" : "text-gray-300 hover:text-white")}>
-                      {item.icon && <item.icon size={16} className="mr-1.5 text-primary/80" />} {item.label}
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-              ))}
-
+              {/* Home */}
               <NavigationMenuItem>
-                <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(),"bg-transparent text-sm font-medium data-[state=open]:bg-zinc-800/50 data-[state=open]:text-white", pathname.startsWith("/features") ? "text-white" : "text-gray-300 hover:text-white")}>
-                    <Sparkles size={16} className="mr-1.5 text-primary/80" /> Other Features
+                <Link href="/" legacyBehavior passHref>
+                  <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-sm font-medium", pathname === "/" ? "text-white" : "text-gray-300 hover:text-white")}>
+                    <HomeIcon size={16} className="mr-1.5 text-primary/80" /> Home
+                  </NavigationMenuLink>
+                </Link>
+              </NavigationMenuItem>
+              
+              {/* Nutrition Dropdown */}
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(),"bg-transparent text-sm font-medium data-[state=open]:bg-zinc-800/50 data-[state=open]:text-white", 
+                  (pathname === "/food-analyzer" || pathname === "/food-recommendation") ? "text-white" : "text-gray-300 hover:text-white")}>
+                  <Apple size={16} className="mr-1.5 text-primary/80" /> Nutrition
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid w-[380px] gap-3 p-4 md:w-[450px] md:grid-cols-1 lg:w-[500px] bg-zinc-900 border-zinc-700/80 shadow-xl rounded-lg">
+                    {nutritionItems.map((item) => (
+                      <ListItem
+                        key={item.label}
+                        title={item.label}
+                        href={item.href}
+                        icon={item.icon}
+                      >
+                        {item.description}
+                      </ListItem>
+                    ))}
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+
+              {/* Other Features Dropdown */}
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(),"bg-transparent text-sm font-medium data-[state=open]:bg-zinc-800/50 data-[state=open]:text-white", 
+                  pathname.startsWith("/features") ? "text-white" : "text-gray-300 hover:text-white")}>
+                  <Sparkles size={16} className="mr-1.5 text-primary/80" /> Other Features
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[380px] gap-3 p-4 md:w-[450px] md:grid-cols-1 lg:w-[500px] bg-zinc-900 border-zinc-700/80 shadow-xl rounded-lg">
@@ -219,9 +247,10 @@ const Header = () => {
                 </NavigationMenuContent>
               </NavigationMenuItem>
 
-              {mainNavItemsSorted.slice(2).map(item => ( // Insights, About GYM BRO
+              {/* Insights and About */}
+              {mainNavItemsSorted.slice(1).map(item => (
                 <NavigationMenuItem key={item.label}>
-                   <Link href={item.href} legacyBehavior passHref>
+                  <Link href={item.href} legacyBehavior passHref>
                     <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-sm font-medium", pathname === item.href ? "text-white" : "text-gray-300 hover:text-white")}>
                       {item.icon && <item.icon size={16} className="mr-1.5 text-primary/80" />} {item.label}
                     </NavigationMenuLink>
@@ -229,45 +258,49 @@ const Header = () => {
                 </NavigationMenuItem>
               ))}
 
-            {isLoggedIn && displayName ? (
-              <>
-                <NavigationMenuItem>
-                  <Link href="/profile" legacyBehavior passHref>
+              {/* Login/Profile Section */}
+              {isLoggedIn && displayName ? (
+                <>
+                  <NavigationMenuItem>
+                    <Link href="/profile" legacyBehavior passHref>
                       <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-sm font-medium hover:text-white", pathname === "/profile" ? "text-white" : "text-gray-300")}>
-                          Halo Bro, <span className="text-primary font-semibold ml-1">{displayName}</span>
+                        Halo Bro, <span className="text-primary font-semibold ml-1">{displayName}</span>
                       </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <Button onClick={handleLoginLogout} variant="outline" size="sm" className="border-primary/60 text-primary hover:bg-primary hover:text-primary-foreground text-xs ml-2">
-                    <LogOut size={14} className="mr-1.5" /> Logout
-                  </Button>
-                </NavigationMenuItem>
-              </>
-            ) : (
-              <div className="flex items-center space-x-1 ml-2">
-                 <NavigationMenuItem>
-                    <Link href="/login" legacyBehavior passHref>
-                        <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-sm font-medium", pathname === "/login" ? "text-white" : "text-gray-300 hover:text-white")}>
-                            Login
-                        </NavigationMenuLink>
                     </Link>
                   </NavigationMenuItem>
-                <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold px-4">
-                  <Link href="/register">Get Started</Link>
-                </Button>
-                <Button onClick={handleLoginLogout} variant="link" size="sm" className="text-xs text-gray-400 hover:text-primary px-1 h-auto py-0">(Simulate Login)</Button>
-              </div>
-            )}
+                  <NavigationMenuItem>
+                    <Button onClick={handleLoginLogout} variant="outline" size="sm" className="border-primary/60 text-primary hover:bg-primary hover:text-primary-foreground text-xs ml-2">
+                      <LogOut size={14} className="mr-1.5" /> Logout
+                    </Button>
+                  </NavigationMenuItem>
+                </>
+              ) : (
+                <div className="flex items-center space-x-1 ml-2">
+                  <NavigationMenuItem>
+                    <Link href="/login" legacyBehavior passHref>
+                      <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-sm font-medium", pathname === "/login" ? "text-white" : "text-gray-300 hover:text-white")}>
+                        Login
+                      </NavigationMenuLink>
+                    </Link>
+                  </NavigationMenuItem>
+                  <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold px-4">
+                    <Link href="/register">Get Started</Link>
+                  </Button>
+                  {/* Simulate Login button hidden for regular users, only visible for admins/developers */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <Button onClick={handleLoginLogout} variant="link" size="sm" className="text-xs text-gray-400 hover:text-primary px-1 h-auto py-0">(Simulate Login)</Button>
+                  )}
+                </div>
+              )}
             </NavigationMenuList>
           </NavigationMenu>
 
-
+          {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center">
-             {isLoggedIn && displayName && (
-                 <Link href="/profile" className="text-white p-1.5 hover:bg-white/10 rounded-full mr-1" onClick={closeMenuOnly} aria-label="Profile">
-                    <UserCircle size={22} />
-                </Link>
+            {isLoggedIn && displayName && (
+              <Link href="/profile" className="text-white p-1.5 hover:bg-white/10 rounded-full mr-1" onClick={closeMenuOnly} aria-label="Profile">
+                <UserCircle size={22} />
+              </Link>
             )}
             <Button variant="ghost" size="icon" className="text-white hover:bg-white/10" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu">
               <AnimatePresence initial={false} mode="wait">
@@ -286,6 +319,7 @@ const Header = () => {
         </div>
       </header>
 
+      {/* Mobile Menu */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
@@ -300,40 +334,53 @@ const Header = () => {
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
             <div className="space-y-2.5 flex-grow overflow-y-auto pb-20 pt-4">
-                {mainNavItemsSorted.map(item => <NavLink key={item.href} href={item.href} icon={item.icon} isMobile>{item.label}</NavLink>)}
-
-                <Separator className="bg-zinc-700/80 my-3" />
-                <p className="px-4 pt-2 pb-1 text-sm font-semibold text-primary">Other Features</p>
-                {otherFeatureItems.map(item => <NavLink key={item.href} href={item.href} icon={item.icon} isMobile>{item.label}</NavLink>)}
-
-                <Separator className="bg-zinc-700/80 my-3" />
-                {isLoggedIn && displayName ? (
-                    <>
-                    <NavLink href="/profile" icon={UserCircle} isMobile>Halo Bro, {displayName}</NavLink>
-                    <div className="pt-6">
-                        <Button onClick={handleLoginLogout} variant="outline" size="lg" className="w-full border-primary/60 text-primary hover:bg-primary hover:text-primary-foreground py-3 text-base">
-                            <LogOut size={18} className="mr-2" /> Logout
-                        </Button>
-                    </div>
-                    </>
-                ) : (
-                    <>
-                    <NavLink href="/login" icon={UserCircle} isMobile>Login</NavLink>
-                    <div className="pt-6">
-                        <Button asChild size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-3.5 text-base">
-                            <Link href="/register" onClick={closeMenuOnly}>Get Started Free</Link>
-                        </Button>
-                    </div>
-                    </>
-                )}
+              {/* Home */}
+              <NavLink href="/" icon={HomeIcon} isMobile>Home</NavLink>
+              
+              {/* Nutrition Section */}
+              <Separator className="bg-zinc-700/80 my-3" />
+              <p className="px-4 pt-2 pb-1 text-sm font-semibold text-primary">Nutrition</p>
+              {nutritionItems.map(item => <NavLink key={item.href} href={item.href} icon={item.icon} isMobile>{item.label}</NavLink>)}
+              
+              {/* Other Features Section */}
+              <Separator className="bg-zinc-700/80 my-3" />
+              <p className="px-4 pt-2 pb-1 text-sm font-semibold text-primary">Other Features</p>
+              {otherFeatureItems.map(item => <NavLink key={item.href} href={item.href} icon={item.icon} isMobile>{item.label}</NavLink>)}
+              
+              {/* Insights and About */}
+              <Separator className="bg-zinc-700/80 my-3" />
+              {mainNavItemsSorted.slice(1).map(item => <NavLink key={item.href} href={item.href} icon={item.icon} isMobile>{item.label}</NavLink>)}
+              
+              {/* Login/Profile Section */}
+              <Separator className="bg-zinc-700/80 my-3" />
+              {isLoggedIn && displayName ? (
+                <>
+                  <NavLink href="/profile" icon={UserCircle} isMobile>Halo Bro, {displayName}</NavLink>
+                  <div className="pt-6">
+                    <Button onClick={handleLoginLogout} variant="outline" size="lg" className="w-full border-primary/60 text-primary hover:bg-primary hover:text-primary-foreground py-3 text-base">
+                      <LogOut size={18} className="mr-2" /> Logout
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <NavLink href="/login" icon={UserCircle} isMobile>Login</NavLink>
+                  <div className="pt-6">
+                    <Button asChild size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-3.5 text-base">
+                      <Link href="/register" onClick={closeMenuOnly}>Get Started Free</Link>
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
 
-            {!isLoggedIn && (
-                <div className="pt-4 mt-auto border-t border-zinc-700/80">
-                    <Button onClick={handleLoginLogout} variant="secondary" size="lg" className="w-full text-sm py-3 bg-zinc-700 hover:bg-zinc-600 text-gray-300">
-                        (Simulate Login: Click Me!)
-                    </Button>
-                </div>
+            {/* Simulate Login in Mobile - Only visible in development */}
+            {!isLoggedIn && process.env.NODE_ENV === 'development' && (
+              <div className="pt-4 mt-auto border-t border-zinc-700/80">
+                <Button onClick={handleLoginLogout} variant="secondary" size="lg" className="w-full text-sm py-3 bg-zinc-700 hover:bg-zinc-600 text-gray-300">
+                  (Simulate Login: Click Me!)
+                </Button>
+              </div>
             )}
           </motion.div>
         )}
