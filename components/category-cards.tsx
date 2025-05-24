@@ -1,11 +1,16 @@
 "use client";
 
-import React from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
-import { Camera, Calculator, Zap as CalorieIcon, ArrowRight } from 'lucide-react';
+import React from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import {
+  Camera,
+  Calculator,
+  Zap as CalorieIcon,
+  ArrowRight,
+} from "lucide-react";
 
 interface CategoryCardItem {
   id: string;
@@ -19,32 +24,38 @@ interface CategoryCardItem {
 
 const gymBroCategories: CategoryCardItem[] = [
   {
-    id: 'food-analyzer',
-    title: 'AI Food Vision',
-    description: 'Snap. Analyze. Optimize. Instant macro and calorie insights from your meal photos for precision fueling.',
-    image: 'https://images.pexels.com/photos/1640774/pexels-photo-1640774.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    id: "food-analyzer",
+    title: "AI Food Vision",
+    description:
+      "Snap. Analyze. Optimize. Instant macro and calorie insights from your meal photos for precision fueling.",
+    image:
+      "https://images.pexels.com/photos/1640774/pexels-photo-1640774.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
     icon: Camera,
-    link: '/food-analyzer',
-    cta: 'Analyze Meal'
+    link: "/food-analyzer",
+    cta: "Analyze Meal",
   },
   {
-    id: 'tdee-calculator',
-    title: 'Caloric Blueprint',
-    description: 'Calculate your precise TDEE & BMR. Strategize calorie intake for effective, sustainable results.',
-    image: 'https://images.pexels.com/photos/3766111/pexels-photo-3766111.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    id: "tdee-calculator",
+    title: "Caloric Blueprint",
+    description:
+      "Calculate your precise TDEE & BMR. Strategize calorie intake for effective, sustainable results.",
+    image:
+      "https://images.pexels.com/photos/3766111/pexels-photo-3766111.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
     icon: CalorieIcon,
-    link: '/features/tdee-calculator',
-    cta: 'Plan Your Intake'
+    link: "/features/tdee-calculator",
+    cta: "Plan Your Intake",
   },
   {
-    id: 'bmi-calculator',
-    title: 'Composition Metric',
-    description: 'Assess your Body Mass Index quickly. A foundational metric to track and understand your fitness journey.',
-    image: 'https://images.pexels.com/photos/38630/bodybuilder-weight-training-stress-38630.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    id: "bmi-calculator",
+    title: "Composition Metric",
+    description:
+      "Assess your Body Mass Index quickly. A foundational metric to track and understand your fitness journey.",
+    image:
+      "https://images.pexels.com/photos/38630/bodybuilder-weight-training-stress-38630.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
     icon: Calculator,
-    link: '/features/bmi-calculator',
-    cta: 'Check Your BMI'
-  }
+    link: "/features/bmi-calculator",
+    cta: "Check Your BMI",
+  },
 ];
 
 const CategoryCards = ({ className }: { className?: string }) => {
@@ -56,9 +67,9 @@ const CategoryCards = ({ className }: { className?: string }) => {
       transition: {
         delay: i * 0.1,
         duration: 0.7,
-        ease: [0.42, 0, 0.58, 1] // Ease-in-out
-      }
-    })
+        ease: [0.42, 0, 0.58, 1], // Ease-in-out
+      },
+    }),
   };
 
   return (
@@ -72,10 +83,21 @@ const CategoryCards = ({ className }: { className?: string }) => {
           className="text-center mb-16 md:mb-20 max-w-3xl mx-auto"
         >
           <h2 className="text-4xl md:text-5xl font-extrabold mb-5 tracking-tight">
-            Intelligent Fitness <span className="bg-gradient-to-r from-bro-start to-bro-end text-transparent bg-clip-text">Tools</span>
+            Intelligent Fitness{" "}
+            <span
+              className="text-transparent bg-clip-text"
+              style={{
+                backgroundImage: "linear-gradient(to right, #3B82F6, #14B8A6)",
+                backgroundSize: "200% 100%",
+                backgroundPosition: "center",
+              }}
+            >
+              Tools
+            </span>
           </h2>
-          <p className="text-lg md:text-xl text-gray-400">
-            Engineered for precision, designed for results. Explore the core of GYM BRO's AI-powered platform.
+          <p className="text-lg md:text-xl text-gray-200">
+            Engineered for precision, designed for results. Explore the core of
+            GYM BRO's AI-powered platform.
           </p>
         </motion.div>
 
@@ -100,7 +122,7 @@ const CategoryCards = ({ className }: { className?: string }) => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
                 <div className="absolute top-5 right-5 p-3 bg-black/50 backdrop-blur-sm rounded-full">
-                    <category.icon className="h-6 w-6 text-primary"/>
+                  <category.icon className="h-6 w-6 text-primary" />
                 </div>
               </div>
 
@@ -108,7 +130,7 @@ const CategoryCards = ({ className }: { className?: string }) => {
                 <h3 className="text-xl lg:text-2xl font-semibold text-white mb-3 leading-tight">
                   {category.title}
                 </h3>
-                <p className="text-gray-400 text-sm mb-6 leading-relaxed flex-grow min-h-[84px]">
+                <p className="text-gray-300 text-sm mb-6 leading-relaxed flex-grow min-h-[84px]">
                   {category.description}
                 </p>
                 <Link
@@ -118,7 +140,11 @@ const CategoryCards = ({ className }: { className?: string }) => {
                     "bg-primary text-primary-foreground hover:bg-primary/80 group-hover:shadow-lg group-hover:shadow-primary/30"
                   )}
                 >
-                  {category.cta} <ArrowRight size={16} className="ml-2 transition-transform group-hover:translate-x-1" />
+                  {category.cta}{" "}
+                  <ArrowRight
+                    size={16}
+                    className="ml-2 transition-transform group-hover:translate-x-1"
+                  />
                 </Link>
               </div>
             </motion.div>

@@ -1,13 +1,19 @@
-"use client"
+"use client";
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { Button } from '@/components/ui/button';
+import Link from "next/link";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
 // Tambahkan BookOpenText ke impor ini jika Anda ingin menggunakannya di pesan "No insights"
-import { Loader2, ArrowRight, CalendarDays, Clock, BookOpenText } from 'lucide-react';
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import {
+  Loader2,
+  ArrowRight,
+  CalendarDays,
+  Clock,
+  BookOpenText,
+} from "lucide-react";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface Blog {
   id: string;
@@ -27,8 +33,13 @@ interface BlogListClientProps {
 
 const ITEMS_PER_LOAD = 6;
 
-export default function BlogListClient({ initialBlogs, moreBlogs }: BlogListClientProps) {
-  const [displayedBlogs, setDisplayedBlogs] = useState(initialBlogs.slice(0, ITEMS_PER_LOAD));
+export default function BlogListClient({
+  initialBlogs,
+  moreBlogs,
+}: BlogListClientProps) {
+  const [displayedBlogs, setDisplayedBlogs] = useState(
+    initialBlogs.slice(0, ITEMS_PER_LOAD)
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(1);
 
@@ -56,9 +67,9 @@ export default function BlogListClient({ initialBlogs, moreBlogs }: BlogListClie
       transition: {
         delay: i * 0.07,
         duration: 0.6,
-        ease: "easeOut"
-      }
-    })
+        ease: "easeOut",
+      },
+    }),
   };
 
   return (
@@ -74,7 +85,10 @@ export default function BlogListClient({ initialBlogs, moreBlogs }: BlogListClie
               animate="visible"
               viewport={{ once: true, amount: 0.1 }}
             >
-              <Link href={`/blog/${blog.id}`} className="group block bg-zinc-900 rounded-xl overflow-hidden shadow-xl hover:shadow-primary/10 border-2 border-transparent hover:border-primary/30 transition-all duration-300 ease-in-out h-full flex flex-col">
+              <Link
+                href={`/blog/${blog.id}`}
+                className="group block bg-zinc-900 rounded-xl overflow-hidden shadow-xl hover:shadow-primary/10 border-2 border-transparent hover:border-primary/30 transition-all duration-300 ease-in-out h-full flex flex-col"
+              >
                 <div className="aspect-[16/9] relative overflow-hidden">
                   <Image
                     src={blog.image}
@@ -98,19 +112,23 @@ export default function BlogListClient({ initialBlogs, moreBlogs }: BlogListClie
                   </p>
                   <div className="mt-auto pt-3 border-t border-zinc-700/50">
                     <div className="flex justify-between items-center text-xs text-gray-500">
+                      <div className="flex items-center">
+                        <CalendarDays size={14} className="mr-1.5" />
+                        <span>{blog.date}</span>
+                      </div>
+                      {blog.readTime && (
                         <div className="flex items-center">
-                            <CalendarDays size={14} className="mr-1.5"/>
-                            <span>{blog.date}</span>
+                          <Clock size={14} className="mr-1.5" />
+                          <span>{blog.readTime}</span>
                         </div>
-                        {blog.readTime && (
-                            <div className="flex items-center">
-                                <Clock size={14} className="mr-1.5"/>
-                                <span>{blog.readTime}</span>
-                            </div>
-                        )}
+                      )}
                     </div>
-                     <div className="mt-4 text-sm font-medium text-primary group-hover:underline flex items-center">
-                        Read Article <ArrowRight size={16} className="ml-1.5 transition-transform group-hover:translate-x-1" />
+                    <div className="mt-4 text-sm font-medium text-primary group-hover:underline flex items-center">
+                      Read Article{" "}
+                      <ArrowRight
+                        size={16}
+                        className="ml-1.5 transition-transform group-hover:translate-x-1"
+                      />
                     </div>
                   </div>
                 </div>
@@ -120,9 +138,13 @@ export default function BlogListClient({ initialBlogs, moreBlogs }: BlogListClie
         </div>
       ) : (
         <div className="text-center py-16">
-            <BookOpenText size={48} className="mx-auto mb-4 text-gray-600"/>
-            <p className="text-gray-500 text-lg">No insights available yet, Bro.</p>
-            <p className="text-sm text-gray-600">Check back soon for expert articles and tips.</p>
+          <BookOpenText size={48} className="mx-auto mb-4 text-gray-600" />
+          <p className="text-gray-500 text-lg">
+            No insights available yet, Bro.
+          </p>
+          <p className="text-sm text-gray-600">
+            Check back soon for expert articles and tips.
+          </p>
         </div>
       )}
 
@@ -131,7 +153,7 @@ export default function BlogListClient({ initialBlogs, moreBlogs }: BlogListClie
           <Button
             variant="outline"
             size="lg"
-            className="border-zinc-700 text-gray-300 hover:bg-zinc-800 hover:text-primary hover:border-primary min-w-[240px] py-3.5 text-base group"
+            className="bg-white text-black min-w-[240px] py-3.5 text-base group"
             onClick={loadMoreBlogs}
             disabled={isLoading}
           >
@@ -141,9 +163,13 @@ export default function BlogListClient({ initialBlogs, moreBlogs }: BlogListClie
                 Loading More...
               </>
             ) : (
-                <>
-                Load More Insights <ArrowRight size={18} className="ml-2 transition-transform group-hover:translate-x-1"/>
-                </>
+              <>
+                Load More Insights{" "}
+                <ArrowRight
+                  size={18}
+                  className="ml-2 transition-transform group-hover:translate-x-1"
+                />
+              </>
             )}
           </Button>
         </div>
