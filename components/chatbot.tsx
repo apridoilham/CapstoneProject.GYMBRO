@@ -43,15 +43,45 @@ export default function Chatbot() {
     const currentInput = input;
     setInput('');
 
-    await new Promise(resolve => setTimeout(resolve, 1200));
+    try {
+      // Kirim request ke API route
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: currentInput,
+          conversationHistory: messages.slice(-5) // Kirim 5 pesan terakhir untuk konteks
+        }),
+      });
 
-    const botResponse: Message = {
-      type: 'bot',
-      content: `Got it, Bro: "${currentInput}". Right now, I'm just a demo. In a real GYM BRO setup, I'd analyze that and give you some killer AI insights! Keep pushing!`,
-      id: crypto.randomUUID()
-    };
-    setMessages(prev => [...prev, botResponse]);
-    setIsLoadingResponse(false);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      const botResponse: Message = {
+        type: 'bot',
+        content: data.message || 'Sorry bro, I had trouble processing that. Try again!',
+        id: crypto.randomUUID()
+      };
+      
+      setMessages(prev => [...prev, botResponse]);
+    } catch (error) {
+      console.error('Error calling OpenAI API:', error);
+      
+      const errorResponse: Message = {
+        type: 'bot',
+        content: 'Oops! Something went wrong, bro. Check your connection and try again!',
+        id: crypto.randomUUID()
+      };
+      
+      setMessages(prev => [...prev, errorResponse]);
+    } finally {
+      setIsLoadingResponse(false);
+    }
   };
 
   return (

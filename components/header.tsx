@@ -1,14 +1,28 @@
-"use client"
+"use client";
 
-import * as React from 'react';
-import Link from 'next/link';
-import { useState, useEffect, useRef } from 'react';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { Menu, UserCircle, Dumbbell, XIcon, LogOut, LayoutDashboard, Sparkles, Info, Newspaper, ChevronDown, Calculator, Zap, Camera, HomeIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { motion, AnimatePresence } from 'framer-motion';
+import * as React from "react";
+import Link from "next/link";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import {
+  Menu,
+  UserCircle,
+  Dumbbell,
+  X as XIcon,
+  LogOut,
+  Sparkles,
+  Info,
+  Newspaper,
+  Calculator,
+  Zap,
+  Camera,
+  HomeIcon,
+  Apple,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -19,16 +33,6 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 
-type GenderType = "male" | "female" | "other" | "prefer_not_to_say";
-
-const DUMMY_INITIAL_PROFILE_DATA = {
-  name: 'Aprido Ilham',
-  username: 'ApridoIlham',
-  gender: "male" as GenderType,
-  heightCm: 185,
-  currentWeightKg: 92,
-};
-
 interface NavItem {
   href: string;
   label: string;
@@ -38,15 +42,60 @@ interface NavItem {
 
 const mainNavItemsSorted: NavItem[] = [
   { href: "/", label: "Home", icon: HomeIcon },
-  { href: "/food-analyzer", label: "Food Analyzer", icon: Camera },
-  { href: "/blog", label: "Insights", icon: Newspaper },
-  { href: "/about", label: "About GYM BRO", icon: Info },
+];
+
+const aboutItems: NavItem[] = [
+  {
+    href: "/about",
+    label: "About GYM BRO",
+    icon: Info,
+    description: "Learn about our mission and team.",
+  },
+  {
+    href: "/blog",
+    label: "Insights",
+    icon: Newspaper,
+    description: "Read our latest articles and tips.",
+  },
+];
+
+const nutritionItems: NavItem[] = [
+  {
+    href: "/food-analyzer",
+    label: "Food Analyzer",
+    icon: Camera,
+    description: "Analyze nutritional content of your food.",
+  },
+  {
+    href: "/food-recommendation",
+    label: "Food Recommendation",
+    icon: Apple,
+    description: "Get personalized food recommendations based on your goals.",
+  },
 ];
 
 const otherFeatureItems: NavItem[] = [
-  { href: "/features/bmi-calculator", label: "BMI Calculator", icon: Calculator, description: "Quickly assess your Body Mass Index." },
-  { href: "/features/tdee-calculator", label: "Calorie & TDEE Calculator", icon: Zap, description: "Estimate your TDEE and plan calorie goals." },
+  {
+    href: "/features/bmi-calculator",
+    label: "BMI Calculator",
+    icon: Calculator,
+    description: "Quickly assess your Body Mass Index.",
+  },
+  {
+    href: "/features/tdee-calculator",
+    label: "Calorie & TDEE Calculator",
+    icon: Zap,
+    description: "Estimate your TDEE and plan calorie goals.",
+  },
 ];
+
+const DUMMY_INITIAL_PROFILE_DATA = {
+  name: "Aprido Ilham",
+  username: "ApridoIlham",
+  gender: "male",
+  heightCm: 185,
+  currentWeightKg: 92,
+};
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -57,39 +106,51 @@ const Header = () => {
   const headerRef = useRef<HTMLElement>(null);
   const [headerActualHeight, setHeaderActualHeight] = useState(0);
 
-  useEffect(() => {
-    const storedLoginStatus = localStorage.getItem('isLoggedInGYMBRO');
-    const storedProfileString = localStorage.getItem('gymBroUserProfile');
+  const updateHeaderHeight = useCallback(() => {
+    if (headerRef.current) {
+      setHeaderActualHeight(headerRef.current.offsetHeight);
+    }
+  }, []);
 
-    if (storedLoginStatus === 'true') {
-      setIsLoggedIn(true);
-      if (storedProfileString) {
-        try {
-          const profile = JSON.parse(storedProfileString);
-          const nameToDisplay = profile.name ? profile.name.split(" ")[0] : DUMMY_INITIAL_PROFILE_DATA.name.split(" ")[0];
-          setDisplayName(nameToDisplay);
-        } catch (e) {
-          setDisplayName(DUMMY_INITIAL_PROFILE_DATA.name.split(" ")[0]);
-        }
-      } else {
+  useEffect(() => {
+    const storedLoginStatus = localStorage.getItem("isLoggedInGYMBRO");
+    const storedProfileString = localStorage.getItem("gymBroUserProfile");
+
+    if (storedLoginStatus === "true" && storedProfileString) {
+      try {
+        const profile = JSON.parse(storedProfileString);
+        const nameToDisplay = profile.name
+          ? profile.name.split(" ")[0]
+          : DUMMY_INITIAL_PROFILE_DATA.name.split(" ")[0];
+        setIsLoggedIn(true);
+        setDisplayName(nameToDisplay);
+      } catch (e) {
+        console.error("Error parsing user profile:", e);
         setDisplayName(DUMMY_INITIAL_PROFILE_DATA.name.split(" ")[0]);
+        setIsLoggedIn(true);
       }
     }
   }, []);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    const handleResize = () => updateHeaderHeight();
+
+    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("resize", handleResize);
+    updateHeaderHeight();
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [updateHeaderHeight]);
 
   useEffect(() => {
-    if (headerRef.current) setHeaderActualHeight(headerRef.current.offsetHeight);
-  }, [isScrolled, isMenuOpen, pathname]);
-
-  useEffect(() => {
-    document.body.style.overflow = isMenuOpen ? 'hidden' : 'auto';
-    return () => { document.body.style.overflow = 'auto'; };
+    document.body.style.overflow = isMenuOpen ? "hidden" : "auto";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
   }, [isMenuOpen]);
 
   const handleLoginLogout = () => {
@@ -97,71 +158,121 @@ const Header = () => {
     setIsLoggedIn(newLoginStatus);
     setIsMenuOpen(false);
     if (newLoginStatus) {
-      localStorage.setItem('isLoggedInGYMBRO', 'true');
-      localStorage.setItem('gymBroUserProfile', JSON.stringify(DUMMY_INITIAL_PROFILE_DATA));
+      localStorage.setItem("isLoggedInGYMBRO", "true");
+      localStorage.setItem(
+        "gymBroUserProfile",
+        JSON.stringify(DUMMY_INITIAL_PROFILE_DATA)
+      );
       setDisplayName(DUMMY_INITIAL_PROFILE_DATA.name.split(" ")[0]);
     } else {
-      localStorage.removeItem('isLoggedInGYMBRO');
-      localStorage.removeItem('gymBroUserProfile');
+      localStorage.removeItem("isLoggedInGYMBRO");
+      localStorage.removeItem("gymBroUserProfile");
       setDisplayName(null);
     }
   };
 
   const closeMenuOnly = () => setIsMenuOpen(false);
 
-  const NavLink = ({ href, children, icon: Icon, isMobile = false, isActiveOverride, className }: { href: string; children: React.ReactNode; icon?: React.ElementType; isMobile?: boolean; isActiveOverride?: boolean; className?: string }) => {
-    const isFeaturesPath = pathname.startsWith("/features");
-    const isActive = isActiveOverride !== undefined ? isActiveOverride :
-                     (isFeaturesPath && href === "#other-features-dropdown") ? true : pathname === href;
+  const NavLink = React.memo(
+    ({
+      href,
+      children,
+      icon: Icon,
+      isMobile = false,
+      isActiveOverride,
+      className,
+    }: {
+      href: string;
+      children: React.ReactNode;
+      icon?: React.ElementType;
+      isMobile?: boolean;
+      isActiveOverride?: boolean;
+      className?: string;
+    }) => {
+      const isFeaturesPath = pathname.startsWith("/features");
+      const isAboutPath = pathname === "/about" || pathname === "/blog";
+      const isActive =
+        isActiveOverride !== undefined
+          ? isActiveOverride
+          : isFeaturesPath && href === "#other-features-dropdown"
+          ? true
+          : isAboutPath && href === "#about-dropdown"
+          ? true
+          : pathname === href;
 
-    return (
-      <Link
-        href={href}
-        onClick={closeMenuOnly}
-        className={cn(
-          "transition-colors duration-200 font-medium flex items-center gap-2 group",
-          isMobile
-            ? "text-xl py-4 px-4 rounded-lg hover:bg-zinc-800/70 w-full"
-            : "text-sm relative pb-1 hover:text-white",
-          isActive && !isMobile ? "text-white" : "text-gray-300",
-          isActive && isMobile ? "bg-primary text-primary-foreground font-semibold" : "text-gray-200 hover:text-white",
-          className
-        )}
-      >
-        {Icon && <Icon size={isMobile ? 24 : 18} className={cn(isActive && isMobile ? "" : "text-primary", "flex-shrink-0 transition-colors group-hover:text-primary/80")} />}
-        <span>{children}</span>
-        {!isMobile && (
-          <span className={cn(
-            "absolute bottom-0 left-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-3/4",
-            isActive ? "w-full" : "w-0"
-          )}></span>
-        )}
-      </Link>
-    );
-  };
+      return (
+        <Link
+          href={href}
+          onClick={closeMenuOnly}
+          className={cn(
+            "transition-all duration-300 flex items-center gap-2 group",
+            isMobile
+              ? "text-lg py-3 px-4 rounded-xl hover:bg-gradient-to-r hover:from-zinc-800 hover:to-zinc-700 w-full"
+              : "text-sm relative px-3 py-2 hover:text-indigo-300",
+            isActive && !isMobile
+              ? "text-indigo-300 bg-gradient-to-r from-indigo-500/20 to-transparent rounded-lg"
+              : "text-gray-200",
+            isActive && isMobile
+              ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold"
+              : "text-gray-200",
+            className
+          )}
+          aria-current={isActive ? "page" : undefined}
+        >
+          {Icon && (
+            <Icon
+              size={isMobile ? 24 : 18}
+              className={cn(
+                isActive && isMobile ? "text-white" : "text-gray-300",
+                "flex-shrink-0 transition-colors group-hover:text-indigo-300"
+              )}
+            />
+          )}
+          <span>{children}</span>
+          {!isMobile && (
+            <span
+              className={cn(
+                "absolute bottom-0 left-0 w-0 h-[2px] bg-indigo-400 transition-all duration-300 group-hover:w-full",
+                isActive ? "w-full" : "w-0"
+              )}
+            />
+          )}
+        </Link>
+      );
+    }
+  );
+  NavLink.displayName = "NavLink";
 
   const ListItem = React.forwardRef<
     React.ElementRef<"a">,
-    React.ComponentPropsWithoutRef<"a"> & { title: string, icon?: React.ElementType }
+    React.ComponentPropsWithoutRef<"a"> & {
+      title: string;
+      icon?: React.ElementType;
+    }
   >(({ className, title, children, icon: Icon, href, ...props }, ref) => {
     return (
       <li>
         <NavigationMenuLink asChild>
           <Link
-            href={href || '#'}
+            href={href || "#"}
             ref={ref}
             onClick={closeMenuOnly}
             className={cn(
-              "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground group",
+              "block select-none space-y-1 rounded-xl p-4 leading-none no-underline outline-none transition-all hover:bg-gradient-to-r hover:from-zinc-800 hover:to-zinc-700 hover:text-indigo-300 focus:bg-gradient-to-r focus:from-zinc-800 focus:to-zinc-700 focus:text-indigo-300 group",
               className
             )}
             {...props}
           >
-            <div className="flex items-center gap-2 text-sm font-medium leading-none text-white group-hover:text-black">
-              {Icon && <Icon size={18} className="text-primary group-hover:text-black"/>}
+            <div className="flex items-center gap-3 text-sm font-semibold text-gray-200 group-hover:text-indigo-300">
+              {Icon && (
+                <Icon
+                  size={20}
+                  className="text-gray-300 group-hover:text-indigo-300"
+                />
+              )}
               {title}
             </div>
-            <p className="line-clamp-2 text-xs leading-snug text-gray-400 group-hover:text-gray-700">
+            <p className="line-clamp-2 text-xs leading-snug text-gray-400 group-hover:text-gray-300">
               {children}
             </p>
           </Link>
@@ -171,40 +282,153 @@ const Header = () => {
   });
   ListItem.displayName = "ListItem";
 
-
   return (
     <>
       <header
         ref={headerRef}
         className={cn(
-          "fixed top-0 left-0 right-0 z-[60] transition-all duration-300 ease-in-out",
-          isScrolled || isMenuOpen ? "py-3.5 bg-black/90 backdrop-blur-lg shadow-xl" : "py-5 bg-transparent"
+          "fixed top-0 left-0 right-0 z-[60] transition-all duration-500 ease-in-out",
+          isScrolled || isMenuOpen
+            ? "py-3 bg-gradient-to-r from-black/80 via-zinc-900/80 to-black/80 backdrop-blur-2xl shadow-2xl"
+            : "py-4 bg-gradient-to-r from-black/50 via-zinc-900/50 to-black/50 backdrop-blur-md"
         )}
       >
-        <div className={cn("container mx-auto px-4 md:px-8 flex items-center justify-between h-12")}>
-          <Link href="/" className="flex items-center text-white font-bold text-xl md:text-2xl group" onClick={closeMenuOnly}>
-            <Dumbbell className="h-7 w-7 md:h-8 md:w-8 mr-2 text-primary transition-transform duration-300 group-hover:rotate-[15deg]" />
-            <span className="tracking-tight">GYM BRO</span>
+        <div
+          className={cn(
+            "container mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-between h-14"
+          )}
+        >
+          <Link
+            href="/"
+            className="flex items-center text-white font-extrabold text-2xl md:text-3xl group"
+            onClick={closeMenuOnly}
+            aria-label="GYM BRO Home"
+          >
+            <Dumbbell
+              className="h-7 w-7 md:h-8 md:w-8 mr-3 text-indigo-400 transition-transform duration-300 group-hover:scale-110 group-hover:text-indigo-300"
+              aria-hidden="true"
+            />
+            <span className="tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500 group-hover:from-indigo-300 group-hover:to-purple-400 transition-all duration-300">
+              GYM BRO
+            </span>
           </Link>
 
           <NavigationMenu className="hidden md:flex">
             <NavigationMenuList>
-              {mainNavItemsSorted.slice(0, 2).map(item => ( // Home, Food Analyzer
+              {mainNavItemsSorted.map((item) => (
                 <NavigationMenuItem key={item.label}>
-                   <Link href={item.href} legacyBehavior passHref>
-                    <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-sm font-medium", pathname === item.href ? "text-white" : "text-gray-300 hover:text-white")}>
-                      {item.icon && <item.icon size={16} className="mr-1.5 text-primary/80" />} {item.label}
+                  <Link href={item.href} legacyBehavior passHref>
+                    <NavigationMenuLink
+                      className={cn(
+                        navigationMenuTriggerStyle(),
+                        "text-sm font-semibold bg-zinc-900/50 border border-zinc-700/50 rounded-xl",
+                        pathname === item.href
+                          ? "text-indigo-300 bg-gradient-to-r from-indigo-500/20 to-transparent"
+                          : "text-gray-200 hover:text-indigo-300 hover:bg-gradient-to-r hover:from-zinc-800/50 hover:to-zinc-700/50"
+                      )}
+                    >
+                      {item.icon && (
+                        <item.icon
+                          size={18}
+                          className="mr-2 text-gray-300 group-hover:text-indigo-300"
+                          aria-hidden="true"
+                        />
+                      )}
+                      {item.label}
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
               ))}
 
               <NavigationMenuItem>
-                <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(),"bg-transparent text-sm font-medium data-[state=open]:bg-zinc-800/50 data-[state=open]:text-white", pathname.startsWith("/features") ? "text-white" : "text-gray-300 hover:text-white")}>
-                    <Sparkles size={16} className="mr-1.5 text-primary/80" /> Other Features
+                <NavigationMenuTrigger
+                  className={cn(
+                    navigationMenuTriggerStyle(),
+                    "text-sm font-semibold bg-zinc-900/50 border border-zinc-700/50 rounded-xl",
+                    pathname === "/about" || pathname === "/blog"
+                      ? "text-indigo-300 bg-gradient-to-r from-indigo-500/20 to-transparent"
+                      : "text-gray-200 hover:text-indigo-300 hover:bg-gradient-to-r hover:from-zinc-800/50 hover:to-zinc-700/50",
+                    "data-[state=open]:bg-gradient-to-r data-[state=open]:from-indigo-500/20 data-[state=open]:to-transparent data-[state=open]:text-indigo-300"
+                  )}
+                >
+                  <Info
+                    size={18}
+                    className="mr-2 text-gray-300 group-hover:text-indigo-300"
+                    aria-hidden="true"
+                  />
+                  About
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
-                  <ul className="grid w-[380px] gap-3 p-4 md:w-[450px] md:grid-cols-1 lg:w-[500px] bg-zinc-900 border-zinc-700/80 shadow-xl rounded-lg">
+                  <ul className="grid w-[400px] gap-3 p-5 md:w-[500px] bg-zinc-900/95 backdrop-blur-md border border-zinc-700/50 shadow-2xl rounded-2xl">
+                    {aboutItems.map((item) => (
+                      <ListItem
+                        key={item.label}
+                        title={item.label}
+                        href={item.href}
+                        icon={item.icon}
+                      >
+                        {item.description}
+                      </ListItem>
+                    ))}
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+
+              <NavigationMenuItem>
+                <NavigationMenuTrigger
+                  className={cn(
+                    navigationMenuTriggerStyle(),
+                    "text-sm font-semibold bg-zinc-900/50 border border-zinc-700/50 rounded-xl",
+                    pathname === "/food-analyzer" ||
+                      pathname === "/food-recommendation"
+                      ? "text-indigo-300 bg-gradient-to-r from-indigo-500/20 to-transparent"
+                      : "text-gray-200 hover:text-indigo-300 hover:bg-gradient-to-r hover:from-zinc-800/50 hover:to-zinc-700/50",
+                    "data-[state=open]:bg-gradient-to-r data-[state=open]:from-indigo-500/20 data-[state=open]:to-transparent data-[state=open]:text-indigo-300"
+                  )}
+                >
+                  <Apple
+                    size={18}
+                    className="mr-2 text-gray-300 group-hover:text-indigo-300"
+                    aria-hidden="true"
+                  />
+                  Nutrition
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid w-[400px] gap-3 p-5 md:w-[500px] bg-zinc-900/95 backdrop-blur-md border border-zinc-700/50 shadow-2xl rounded-2xl">
+                    {nutritionItems.map((item) => (
+                      <ListItem
+                        key={item.label}
+                        title={item.label}
+                        href={item.href}
+                        icon={item.icon}
+                      >
+                        {item.description}
+                      </ListItem>
+                    ))}
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+
+              <NavigationMenuItem>
+                <NavigationMenuTrigger
+                  className={cn(
+                    navigationMenuTriggerStyle(),
+                    "text-sm font-semibold bg-zinc-900/50 border border-zinc-700/50 rounded-xl",
+                    pathname.startsWith("/features")
+                      ? "text-indigo-300 bg-gradient-to-r from-indigo-500/20 to-transparent"
+                      : "text-gray-200 hover:text-indigo-300 hover:bg-gradient-to-r hover:from-zinc-800/50 hover:to-zinc-700/50",
+                    "data-[state=open]:bg-gradient-to-r data-[state=open]:from-indigo-500/20 data-[state=open]:to-transparent data-[state=open]:text-indigo-300"
+                  )}
+                >
+                  <Sparkles
+                    size={18}
+                    className="mr-2 text-gray-300 group-hover:text-indigo-300"
+                    aria-hidden="true"
+                  />
+                  Other Features
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid w-[400px] gap-3 p-5 md:w-[500px] bg-zinc-900/95 backdrop-blur-md border border-zinc-700/50 shadow-2xl rounded-2xl">
                     {otherFeatureItems.map((feature) => (
                       <ListItem
                         key={feature.label}
@@ -219,57 +443,96 @@ const Header = () => {
                 </NavigationMenuContent>
               </NavigationMenuItem>
 
-              {mainNavItemsSorted.slice(2).map(item => ( // Insights, About GYM BRO
-                <NavigationMenuItem key={item.label}>
-                   <Link href={item.href} legacyBehavior passHref>
-                    <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-sm font-medium", pathname === item.href ? "text-white" : "text-gray-300 hover:text-white")}>
-                      {item.icon && <item.icon size={16} className="mr-1.5 text-primary/80" />} {item.label}
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-              ))}
-
-            {isLoggedIn && displayName ? (
-              <>
-                <NavigationMenuItem>
-                  <Link href="/profile" legacyBehavior passHref>
-                      <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-sm font-medium hover:text-white", pathname === "/profile" ? "text-white" : "text-gray-300")}>
-                          Halo Bro, <span className="text-primary font-semibold ml-1">{displayName}</span>
+              {isLoggedIn && displayName ? (
+                <>
+                  <NavigationMenuItem>
+                    <Link href="/profile" legacyBehavior passHref>
+                      <NavigationMenuLink
+                        className={cn(
+                          navigationMenuTriggerStyle(),
+                          "text-sm font-semibold bg-zinc-900/50 border border-zinc-700/50 rounded-xl",
+                          pathname === "/profile"
+                            ? "text-indigo-300 bg-gradient-to-r from-indigo-500/20 to-transparent"
+                            : "text-gray-200 hover:text-indigo-300 hover:bg-gradient-to-r hover:from-zinc-800/50 hover:to-zinc-700/50"
+                        )}
+                      >
+                        Hello,{" "}
+                        <span className="text-indigo-400 font-semibold ml-1">
+                          {displayName}
+                        </span>
                       </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <Button onClick={handleLoginLogout} variant="outline" size="sm" className="border-primary/60 text-primary hover:bg-primary hover:text-primary-foreground text-xs ml-2">
-                    <LogOut size={14} className="mr-1.5" /> Logout
-                  </Button>
-                </NavigationMenuItem>
-              </>
-            ) : (
-              <div className="flex items-center space-x-1 ml-2">
-                 <NavigationMenuItem>
-                    <Link href="/login" legacyBehavior passHref>
-                        <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-sm font-medium", pathname === "/login" ? "text-white" : "text-gray-300 hover:text-white")}>
-                            Login
-                        </NavigationMenuLink>
                     </Link>
                   </NavigationMenuItem>
-                <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold px-4">
-                  <Link href="/register">Get Started</Link>
-                </Button>
-                <Button onClick={handleLoginLogout} variant="link" size="sm" className="text-xs text-gray-400 hover:text-primary px-1 h-auto py-0">(Simulate Login)</Button>
-              </div>
-            )}
+                  <NavigationMenuItem>
+                    <Button
+                      onClick={handleLoginLogout}
+                      variant="outline"
+                      size="sm"
+                      className="border-indigo-500/50 text-indigo-300 bg-zinc-900/50 hover:bg-indigo-500 hover:text-white text-xs ml-3 rounded-xl"
+                    >
+                      <LogOut size={16} className="mr-1.5" aria-hidden="true" />
+                      Logout
+                    </Button>
+                  </NavigationMenuItem>
+                </>
+              ) : (
+                <div className="flex items-center space-x-3 ml-3">
+                  <NavigationMenuItem>
+                    <Link href="/login" legacyBehavior passHref>
+                      <NavigationMenuLink
+                        className={cn(
+                          navigationMenuTriggerStyle(),
+                          "text-sm font-semibold bg-zinc-900/50 border border-zinc-700/50 rounded-xl",
+                          pathname === "/login"
+                            ? "text-indigo-300 bg-gradient-to-r from-indigo-500/20 to-transparent"
+                            : "text-gray-200 hover:text-indigo-300 hover:bg-gradient-to-r hover:from-zinc-800/50 hover:to-zinc-700/50"
+                        )}
+                      >
+                        Login
+                      </NavigationMenuLink>
+                    </Link>
+                  </NavigationMenuItem>
+                  <Button
+                    asChild
+                    size="sm"
+                    className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 font-semibold px-5 rounded-xl"
+                  >
+                    <Link href="/register">Get Started</Link>
+                  </Button>
+                  {process.env.NODE_ENV === "development" && (
+                    <Button
+                      onClick={handleLoginLogout}
+                      variant="link"
+                      size="sm"
+                      className="text-xs text-gray-400 hover:text-indigo-300 px-1 h-auto py-0"
+                    >
+                      (Simulate Login)
+                    </Button>
+                  )}
+                </div>
+              )}
             </NavigationMenuList>
           </NavigationMenu>
 
-
           <div className="md:hidden flex items-center">
-             {isLoggedIn && displayName && (
-                 <Link href="/profile" className="text-white p-1.5 hover:bg-white/10 rounded-full mr-1" onClick={closeMenuOnly} aria-label="Profile">
-                    <UserCircle size={22} />
-                </Link>
+            {isLoggedIn && displayName && (
+              <Link
+                href="/profile"
+                className="text-indigo-300 p-2 hover:bg-zinc-800/50 rounded-full mr-2"
+                onClick={closeMenuOnly}
+                aria-label={`Profile for ${displayName}`}
+              >
+                <UserCircle size={24} aria-hidden="true" />
+              </Link>
             )}
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/10" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-indigo-300 hover:bg-zinc-800/50 rounded-full"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isMenuOpen}
+            >
               <AnimatePresence initial={false} mode="wait">
                 <motion.div
                   key={isMenuOpen ? "x" : "menu"}
@@ -289,51 +552,122 @@ const Header = () => {
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
-            className="md:hidden fixed inset-x-0 bg-black/95 backdrop-blur-xl p-6 flex flex-col z-[55]"
+            className="md:hidden fixed inset-x-0 bg-gradient-to-b from-black/95 to-zinc-900/95 backdrop-blur-2xl p-6 flex flex-col z-[55]"
             style={{
               top: `${headerActualHeight}px`,
-              height: `calc(100vh - ${headerActualHeight}px)`
+              height: `calc(100vh - ${headerActualHeight}px)`,
             }}
-            initial={{ opacity: 0, y: "-100%" }}
-            animate={{ opacity: 1, y: "0%" }}
-            exit={{ opacity: 0, y: "-100%" }}
+            initial={{ opacity: 0, x: "-100%" }}
+            animate={{ opacity: 1, x: "0%" }}
+            exit={{ opacity: 0, x: "-100%" }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            <div className="space-y-2.5 flex-grow overflow-y-auto pb-20 pt-4">
-                {mainNavItemsSorted.map(item => <NavLink key={item.href} href={item.href} icon={item.icon} isMobile>{item.label}</NavLink>)}
+            <div className="space-y-3 flex-grow overflow-y-auto pb-24 pt-6">
+              {mainNavItemsSorted.map((item) => (
+                <NavLink
+                  key={item.href}
+                  href={item.href}
+                  icon={item.icon}
+                  isMobile
+                >
+                  {item.label}
+                </NavLink>
+              ))}
 
-                <Separator className="bg-zinc-700/80 my-3" />
-                <p className="px-4 pt-2 pb-1 text-sm font-semibold text-primary">Other Features</p>
-                {otherFeatureItems.map(item => <NavLink key={item.href} href={item.href} icon={item.icon} isMobile>{item.label}</NavLink>)}
+              <Separator className="bg-zinc-700/50 my-4" />
+              <p className="px-4 pt-2 pb-1 text-sm font-bold text-indigo-300">
+                About
+              </p>
+              {aboutItems.map((item) => (
+                <NavLink
+                  key={item.href}
+                  href={item.href}
+                  icon={item.icon}
+                  isMobile
+                >
+                  {item.label}
+                </NavLink>
+              ))}
 
-                <Separator className="bg-zinc-700/80 my-3" />
-                {isLoggedIn && displayName ? (
-                    <>
-                    <NavLink href="/profile" icon={UserCircle} isMobile>Halo Bro, {displayName}</NavLink>
-                    <div className="pt-6">
-                        <Button onClick={handleLoginLogout} variant="outline" size="lg" className="w-full border-primary/60 text-primary hover:bg-primary hover:text-primary-foreground py-3 text-base">
-                            <LogOut size={18} className="mr-2" /> Logout
-                        </Button>
-                    </div>
-                    </>
-                ) : (
-                    <>
-                    <NavLink href="/login" icon={UserCircle} isMobile>Login</NavLink>
-                    <div className="pt-6">
-                        <Button asChild size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-3.5 text-base">
-                            <Link href="/register" onClick={closeMenuOnly}>Get Started Free</Link>
-                        </Button>
-                    </div>
-                    </>
-                )}
+              <Separator className="bg-zinc-700/50 my-4" />
+              <p className="px-4 pt-2 pb-1 text-sm font-bold text-indigo-300">
+                Nutrition
+              </p>
+              {nutritionItems.map((item) => (
+                <NavLink
+                  key={item.href}
+                  href={item.href}
+                  icon={item.icon}
+                  isMobile
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+
+              <Separator className="bg-zinc-700/50 my-4" />
+              <p className="px-4 pt-2 pb-1 text-sm font-bold text-indigo-300">
+                Other Features
+              </p>
+              {otherFeatureItems.map((item) => (
+                <NavLink
+                  key={item.href}
+                  href={item.href}
+                  icon={item.icon}
+                  isMobile
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+
+              <Separator className="bg-zinc-700/50 my-4" />
+              {isLoggedIn && displayName ? (
+                <>
+                  <NavLink href="/profile" icon={UserCircle} isMobile>
+                    Hello, {displayName}
+                  </NavLink>
+                  <div className="pt-8">
+                    <Button
+                      onClick={handleLoginLogout}
+                      variant="outline"
+                      size="lg"
+                      className="w-full border-indigo-500/50 text-indigo-300 bg-zinc-900/50 hover:bg-indigo-500 hover:text-white py-4 text-base rounded-xl"
+                    >
+                      <LogOut size={20} className="mr-2" aria-hidden="true" />
+                      Logout
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <NavLink href="/login" icon={UserCircle} isMobile>
+                    Login
+                  </NavLink>
+                  <div className="pt-8">
+                    <Button
+                      asChild
+                      size="lg"
+                      className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 font-semibold py-4 text-base rounded-xl"
+                    >
+                      <Link href="/register" onClick={closeMenuOnly}>
+                        Get Started Free
+                      </Link>
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
 
-            {!isLoggedIn && (
-                <div className="pt-4 mt-auto border-t border-zinc-700/80">
-                    <Button onClick={handleLoginLogout} variant="secondary" size="lg" className="w-full text-sm py-3 bg-zinc-700 hover:bg-zinc-600 text-gray-300">
-                        (Simulate Login: Click Me!)
-                    </Button>
-                </div>
+            {!isLoggedIn && process.env.NODE_ENV === "development" && (
+              <div className="pt-4 mt-auto border-t border-zinc-700/50">
+                <Button
+                  onClick={handleLoginLogout}
+                  variant="secondary"
+                  size="lg"
+                  className="w-full text-sm py-4 bg-zinc-700/50 hover:bg-zinc-600/50 text-indigo-300 rounded-xl"
+                >
+                  (Simulate Login)
+                </Button>
+              </div>
             )}
           </motion.div>
         )}
