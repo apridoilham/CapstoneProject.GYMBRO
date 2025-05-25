@@ -130,7 +130,7 @@ export default function BlogPageLayout() {
         <header className="text-center mb-16 md:mb-20 max-w-3xl mx-auto">
           <BookOpenText
             size={52}
-            className="mx-auto mb-6 text-primary animate-slow-pulse"
+            className="mx-auto mb-6 text-white animate-slow-pulse"
           />
           <h1 className="text-5xl md:text-6xl font-black text-white tracking-tighter">
             GYM <BroText>BRO</BroText> Insights

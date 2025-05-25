@@ -458,7 +458,7 @@ export default function BmiCalculatorClient() {
                 <CardContent className="space-y-7 pt-2">
                   <div className="grid grid-cols-2 gap-x-4 gap-y-5">
                     <div>
-                      <Label className="text-sm font-medium text-gray-300 mb-2 block">
+                      <Label className="text-sm font-medium text-white mb-2 block">
                         Gender
                       </Label>
                       <RadioGroup
@@ -471,7 +471,7 @@ export default function BmiCalculatorClient() {
                           <RadioGroupItem
                             value="male"
                             id="male"
-                            className="border-primary text-primary focus:ring-primary"
+                            className="border-white text-primary focus:ring-primary"
                           />
                           <Label
                             htmlFor="male"
@@ -484,7 +484,7 @@ export default function BmiCalculatorClient() {
                           <RadioGroupItem
                             value="female"
                             id="female"
-                            className="border-primary text-primary focus:ring-primary"
+                            className="border-white text-primary focus:ring-primary"
                           />
                           <Label
                             htmlFor="female"
@@ -496,7 +496,7 @@ export default function BmiCalculatorClient() {
                       </RadioGroup>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-gray-300 mb-2 block">
+                      <Label className="text-sm font-medium text-white mb-2 block">
                         Unit System
                       </Label>
                       <Select
@@ -530,7 +530,7 @@ export default function BmiCalculatorClient() {
                     <div className="flex justify-between items-center mb-2">
                       <Label
                         htmlFor="height"
-                        className="text-sm font-medium text-gray-300"
+                        className="text-sm font-medium text-white"
                       >
                         Height ({heightUnit})
                       </Label>
@@ -558,7 +558,7 @@ export default function BmiCalculatorClient() {
                     <div className="flex justify-between items-center mb-2">
                       <Label
                         htmlFor="weight"
-                        className="text-sm font-medium text-gray-300"
+                        className="text-sm font-medium text-white"
                       >
                         Weight ({weightUnit})
                       </Label>
@@ -657,7 +657,7 @@ export default function BmiCalculatorClient() {
                             )
                           </p>
                           <Separator className="bg-zinc-700/60 my-4" />
-                          <p className="text-sm text-gray-300 leading-relaxed">
+                          <p className="text-sm text-white leading-relaxed">
                             {displayBmiCategory.advice}
                           </p>
                         </CardContent>

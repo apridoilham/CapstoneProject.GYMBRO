@@ -437,7 +437,7 @@ export default function FoodRecommendationClient() {
             <Apple size={52} className="mx-auto mb-5 text-white" />
             <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight">
               <BroText>GYM BRO</BroText>{" "}
-              <span className="text-sky-500">Food Recommendations</span>
+              <span className="text-white">Food Recommendations</span>
             </h1>
             <p className="text-gray-200 mt-4 text-md md:text-lg max-w-2xl mx-auto">
               Get personalized food recommendations based on your fitness goals
@@ -616,7 +616,7 @@ export default function FoodRecommendationClient() {
               animate={{ opacity: 1, y: 0 }}
               className="mb-8"
             >
-              <Card className="bg-gradient-to-r from-sky-500/20 to-sky-500/10 border-sky-500/30 shadow-xl">
+              <Card className="bg-gradient-to-r from-black-500/20 to-black-500/10 border-sky-500/30 shadow-xl">
                 <CardContent className="p-6 text-center">
                   <Heart size={24} className="mx-auto mb-2 text-sky-500" />
                   <h3 className="text-xl font-bold text-white mb-1">
