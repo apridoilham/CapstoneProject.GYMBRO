@@ -90,6 +90,81 @@ Content-Type: application/json
 
 # Endpoint: `/user`
 
+## Deskripsi
+Mengubah atau menambahkan data yang belum terinput
+
+## HTTP Request
+
+```
+PUT /user
+```
+
+## Headers
+
+| Nama            | Tipe    | Deskripsi                                 |
+|-----------------|---------|-------------------------------------------|
+| Content-Type    | string  | `application/json`                        |
+| Authorization   | string  | `Bearer <token>`                          |
+
+## Contoh Request
+
+```http
+PUT /user
+Host: api.example.com
+Content-Type: application/json
+Authorization: Bearer <token>
+```
+
+## Payload
+```
+NOTE
+Untuk bagian date pastikan valid date yang ada di js new Date()
+```
+
+```json
+{
+  "email": "coba2@gmail.com",
+  "date": "2025-05-20T13:45:00.000Z",
+  "age": 20,
+  "gender": "Perempuan",
+  "height": 150,
+  "weight": 45,
+  "BloodPressure": {
+    "systolic": 130,
+    "diastolic": 80
+  },
+  "FastingGlucose": 95
+}
+```
+
+## Output
+
+```json
+{
+  "message": "Update success",
+  "success": true,
+  "user": {
+    "_id": "682d300247f35e941acdd17b",
+    "email": "coba2@gmail.com",
+    "fullName": "Ccoba 2",
+    "password": "$2b$10$TfJqWPdaoBfJkD6hT.2XjOwVj/oqq7WZi90Mm.O/YL5SoRwAYp8W.",
+    "isComplete": true,
+    "__v": 0,
+    "BloodPressure": {
+      "systolic": 130,
+      "diastolic": 80
+    },
+    "FastingGlucose": 95,
+    "age": 20,
+    "date": "2025-05-20T13:45:00.000Z",
+    "gender": "Perempuan",
+    "height": 140,
+    "weight": 45
+  }
+}
+```
+
+
 # Endpoint: `/user/:email`
 
 ## Deskripsi
