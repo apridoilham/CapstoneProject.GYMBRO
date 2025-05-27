@@ -141,7 +141,7 @@ export default function LoginClient() {
 
       // Tambah delay kecil sebelum redirect untuk memastikan event terproses
       setTimeout(() => {
-        router.push("/profile");
+        router.push("/");
       }, 100);
     } catch (error: any) {
       // Axios error handling

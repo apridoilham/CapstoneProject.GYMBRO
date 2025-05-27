@@ -27,6 +27,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { getFoodRecommendations } from "@/lib/gemini";
 
 const BroText = ({ children }: { children: React.ReactNode }) => (
   <span
@@ -381,11 +382,11 @@ export default function FoodRecommendationClient() {
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      const goalRecommendations = mockRecommendations[selectedGoal] ?? [];
-      setRecommendations(goalRecommendations);
+      const result = await getFoodRecommendations(
+        userProfile,
+        selectedGoal,
+        selectedActivity
+      );
 
       const calories = calculateCalories(
         userProfile,
@@ -394,9 +395,19 @@ export default function FoodRecommendationClient() {
       );
       setDailyCalories(calories);
 
+      // Transform the recommendations to match our interface
+      const transformedRecommendations = result.recommendations.map(
+        (rec: any) => ({
+          id: crypto.randomUUID(),
+          ...rec,
+        })
+      );
+
+      setRecommendations(transformedRecommendations);
+
       toast({
         title: "Recommendations Generated!",
-        description: `Found ${goalRecommendations.length} personalized food recommendations for you.`,
+        description: `Found ${transformedRecommendations.length} personalized food recommendations for you.`,
         action: <CheckCircle className="h-5 w-5 text-green-500" />,
       });
     } catch (error) {

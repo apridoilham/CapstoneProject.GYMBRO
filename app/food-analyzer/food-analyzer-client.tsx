@@ -28,6 +28,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { analyzeFood } from "@/lib/gemini";
 
 interface NutritionInfo {
   foodName: string;
@@ -114,56 +115,46 @@ export default function FoodAnalyzerClient() {
     setError(null);
     setAnalysisResult(null);
 
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      // Convert image to base64
+      const reader = new FileReader();
+      const base64Promise = new Promise((resolve) => {
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(imageFile);
+      });
 
-    const mockResults: NutritionInfo[] = [
-      {
-        foodName: "Grilled Chicken Breast",
-        calories: "165",
-        protein: "31g",
-        fat: "3.6g",
-        carbs: "0g",
-        servingSize: "100g",
-        confidence: 0.92,
-      },
-      {
-        foodName: "Apple",
-        calories: "95",
-        protein: "0.5g",
-        fat: "0.3g",
-        carbs: "25g",
-        servingSize: "1 medium",
-        confidence: 0.88,
-      },
-      {
-        foodName: "Scrambled Eggs",
-        calories: "140",
-        protein: "13g",
-        fat: "9g",
-        carbs: "1g",
-        servingSize: "2 large",
-        confidence: 0.95,
-      },
-      {
-        foodName: "Brown Rice",
-        calories: "111",
-        protein: "2.6g",
-        fat: "0.9g",
-        carbs: "23g",
-        servingSize: "100g cooked",
-        confidence: 0.85,
-      },
-    ];
-    const randomResult =
-      mockResults[Math.floor(Math.random() * mockResults.length)];
-    setAnalysisResult(randomResult);
+      const base64 = (await base64Promise) as string;
 
-    setIsLoading(false);
-    toast({
-      title: "Analysis Complete!",
-      description: `Identified: ${randomResult.foodName}. (Simulated Result)`,
-      action: <CheckCircle className="h-5 w-5 text-green-500" />,
-    });
+      // Call Gemini API
+      const result = await analyzeFood(base64);
+
+      setAnalysisResult({
+        foodName: result.foodName,
+        calories: result.calories,
+        protein: result.protein,
+        fat: result.fat,
+        carbs: result.carbs,
+        servingSize: result.servingSize,
+        confidence: result.confidence,
+      });
+
+      toast({
+        title: "Analysis Complete!",
+        description: `Identified: ${result.foodName}`,
+        action: <CheckCircle className="h-5 w-5 text-green-500" />,
+      });
+    } catch (error) {
+      console.error("Error analyzing food:", error);
+      setError("Failed to analyze the image. Please try again.");
+      toast({
+        variant: "destructive",
+        title: "Analysis Failed",
+        description:
+          "There was an error analyzing your food image. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -212,9 +203,9 @@ export default function FoodAnalyzerClient() {
                       <Image
                         src={imagePreview}
                         alt="Uploaded food preview"
-                        layout="fill"
-                        objectFit="contain"
-                        className="rounded-md"
+                        fill
+                        className="rounded-md object-contain"
+                        priority
                       />
                       <Button
                         variant="destructive"
