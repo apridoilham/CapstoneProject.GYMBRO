@@ -409,8 +409,8 @@ const Header = () => {
         className={cn(
           "fixed top-0 left-0 right-0 z-[60] transition-all duration-500 ease-in-out",
           isScrolled || isMenuOpen
-            ? "py-3 bg-gradient-to-r from-black/80 via-zinc-900/80 to-black/80 backdrop-blur-2xl shadow-2xl"
-            : "py-4 bg-gradient-to-r from-black/50 via-zinc-900/50 to-black/50 backdrop-blur-md"
+            ? "py-3 bg-gradient-to-r from-black/90 via-zinc-900/90 to-black/90 shadow-2xl"
+            : "py-4 bg-gradient-to-r from-black/40 via-zinc-900/40 to-black/40"
         )}
       >
         <div className="container mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-between h-14">
@@ -475,7 +475,7 @@ const Header = () => {
                   About
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
-                  <ul className="grid w-[400px] gap-3 p-5 md:w-[500px] bg-zinc-900/95 backdrop-blur-md border border-zinc-700/50 shadow-2xl rounded-2xl">
+                  <ul className="grid w-[400px] gap-3 p-5 md:w-[500px] bg-zinc-900/95 border border-zinc-700/50 shadow-2xl rounded-2xl">
                     {aboutItems.map((item) => (
                       <ListItem
                         key={item.label}
@@ -510,7 +510,7 @@ const Header = () => {
                   Nutrition
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
-                  <ul className="grid w-[400px] gap-3 p-5 md:w-[500px] bg-zinc-900/95 backdrop-blur-md border border-zinc-700/50 shadow-2xl rounded-2xl">
+                  <ul className="grid w-[400px] gap-3 p-5 md:w-[500px] bg-zinc-900/95 border border-zinc-700/50 shadow-2xl rounded-2xl">
                     {nutritionItems.map((item) => (
                       <ListItem
                         key={item.label}
@@ -544,7 +544,7 @@ const Header = () => {
                   Other Features
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
-                  <ul className="grid w-[400px] gap-3 p-5 md:w-[500px] bg-zinc-900/95 backdrop-blur-md border border-zinc-700/50 shadow-2xl rounded-2xl">
+                  <ul className="grid w-[400px] gap-3 p-5 md:w-[500px] bg-zinc-900/95 border border-zinc-700/50 shadow-2xl rounded-2xl">
                     {otherFeatureItems.map((feature) => (
                       <ListItem
                         key={feature.label}
@@ -658,7 +658,7 @@ const Header = () => {
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
-            className="md:hidden fixed inset-x-0 bg-gradient-to-b from-black/95 to-zinc-900/95 backdrop-blur-2xl p-6 flex flex-col z-[55]"
+            className="md:hidden fixed inset-x-0 bg-gradient-to-b from-black/95 to-zinc-900/95 p-6 flex flex-col z-[55]"
             style={{
               top: `${headerActualHeight}px`,
               height: `calc(100vh - ${headerActualHeight}px)`,
