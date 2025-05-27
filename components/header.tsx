@@ -9,7 +9,7 @@ import {
   Menu,
   UserCircle,
   Dumbbell,
-  X as XIcon,
+  XIcon,
   LogOut,
   Sparkles,
   Info,
@@ -89,22 +89,16 @@ const otherFeatureItems: NavItem[] = [
   },
 ];
 
-const DUMMY_INITIAL_PROFILE_DATA = {
-  name: "Aprido Ilham",
-  username: "ApridoIlham",
-  gender: "male",
-  heightCm: 185,
-  currentWeightKg: 92,
-};
-
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const pathname = usePathname();
   const headerRef = useRef<HTMLElement>(null);
   const [headerActualHeight, setHeaderActualHeight] = useState(0);
+  const checkTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const updateHeaderHeight = useCallback(() => {
     if (headerRef.current) {
@@ -112,26 +106,114 @@ const Header = () => {
     }
   }, []);
 
-  useEffect(() => {
-    const storedLoginStatus = localStorage.getItem("isLoggedInGYMBRO");
-    const storedProfileString = localStorage.getItem("gymBroUserProfile");
-
-    if (storedLoginStatus === "true" && storedProfileString) {
-      try {
-        const profile = JSON.parse(storedProfileString);
-        const nameToDisplay = profile.name
-          ? profile.name.split(" ")[0]
-          : DUMMY_INITIAL_PROFILE_DATA.name.split(" ")[0];
-        setIsLoggedIn(true);
-        setDisplayName(nameToDisplay);
-      } catch (e) {
-        console.error("Error parsing user profile:", e);
-        setDisplayName(DUMMY_INITIAL_PROFILE_DATA.name.split(" ")[0]);
-        setIsLoggedIn(true);
-      }
+  // Debounced function to check login status
+  const debouncedCheckLoginStatus = useCallback(() => {
+    if (checkTimeoutRef.current) {
+      clearTimeout(checkTimeoutRef.current);
     }
+
+    checkTimeoutRef.current = setTimeout(() => {
+      try {
+        const storedLoginStatus = localStorage.getItem("isLoggedInGYMBRO");
+        const storedProfileString = localStorage.getItem("gymBroUserProfile");
+
+        // Only proceed if both values exist and login status is explicitly true
+        if (storedLoginStatus === "true" && storedProfileString) {
+          try {
+            const profile = JSON.parse(storedProfileString);
+
+            // Validate profile data more strictly
+            if (
+              profile &&
+              typeof profile === "object" &&
+              profile.name &&
+              typeof profile.name === "string" &&
+              profile.name.trim() !== ""
+            ) {
+              setIsLoggedIn(true);
+              setDisplayName(profile.name.split(" ")[0]);
+            } else {
+              // Clear invalid data
+              localStorage.removeItem("isLoggedInGYMBRO");
+              localStorage.removeItem("gymBroUserProfile");
+              setIsLoggedIn(false);
+              setDisplayName(null);
+            }
+          } catch (parseError) {
+            console.error("Error parsing user profile:", parseError);
+            // Clear corrupted data
+            localStorage.removeItem("isLoggedInGYMBRO");
+            localStorage.removeItem("gymBroUserProfile");
+            setIsLoggedIn(false);
+            setDisplayName(null);
+          }
+        } else {
+          // Not logged in or missing data
+          setIsLoggedIn(false);
+          setDisplayName(null);
+        }
+      } catch (error) {
+        console.error("Error checking login status:", error);
+        setIsLoggedIn(false);
+        setDisplayName(null);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 50); // Reduce debounce time from 100ms to 50ms
   }, []);
 
+  // Initial check on mount
+  useEffect(() => {
+    debouncedCheckLoginStatus();
+
+    return () => {
+      if (checkTimeoutRef.current) {
+        clearTimeout(checkTimeoutRef.current);
+      }
+    };
+  }, [debouncedCheckLoginStatus]);
+
+  // Listen for custom authentication events (primary method)
+  useEffect(() => {
+    const handleAuthEvent = (event: Event) => {
+      console.log("Auth event received:", event.type);
+      // Immediately check login status for auth events
+      if (checkTimeoutRef.current) {
+        clearTimeout(checkTimeoutRef.current);
+      }
+      debouncedCheckLoginStatus();
+    };
+
+    // Listen for custom events
+    window.addEventListener("userLoggedIn", handleAuthEvent);
+    window.addEventListener("userLoggedOut", handleAuthEvent);
+    window.addEventListener("userRegistered", handleAuthEvent);
+
+    return () => {
+      window.removeEventListener("userLoggedIn", handleAuthEvent);
+      window.removeEventListener("userLoggedOut", handleAuthEvent);
+      window.removeEventListener("userRegistered", handleAuthEvent);
+    };
+  }, [debouncedCheckLoginStatus]);
+
+  // Listen for storage events (cross-tab updates) - backup method
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      // Only react to relevant storage changes
+      if (e.key === "isLoggedInGYMBRO" || e.key === "gymBroUserProfile") {
+        console.log("Storage change detected:", e.key, e.newValue);
+        debouncedCheckLoginStatus();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [debouncedCheckLoginStatus]);
+
+  // Handle scroll and resize events
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
     const handleResize = () => updateHeaderHeight();
@@ -146,6 +228,7 @@ const Header = () => {
     };
   }, [updateHeaderHeight]);
 
+  // Handle mobile menu body scroll
   useEffect(() => {
     document.body.style.overflow = isMenuOpen ? "hidden" : "auto";
     return () => {
@@ -153,25 +236,30 @@ const Header = () => {
     };
   }, [isMenuOpen]);
 
-  const handleLoginLogout = () => {
-    const newLoginStatus = !isLoggedIn;
-    setIsLoggedIn(newLoginStatus);
-    setIsMenuOpen(false);
-    if (newLoginStatus) {
-      localStorage.setItem("isLoggedInGYMBRO", "true");
-      localStorage.setItem(
-        "gymBroUserProfile",
-        JSON.stringify(DUMMY_INITIAL_PROFILE_DATA)
-      );
-      setDisplayName(DUMMY_INITIAL_PROFILE_DATA.name.split(" ")[0]);
-    } else {
-      localStorage.removeItem("isLoggedInGYMBRO");
-      localStorage.removeItem("gymBroUserProfile");
-      setDisplayName(null);
-    }
-  };
+  const handleLogout = useCallback(() => {
+    console.log("Logging out...");
 
-  const closeMenuOnly = () => setIsMenuOpen(false);
+    // Clear authentication data
+    localStorage.removeItem("isLoggedInGYMBRO");
+    localStorage.removeItem("gymBroUserProfile");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("refreshToken");
+
+    // Update state immediately
+    setIsLoggedIn(false);
+    setDisplayName(null);
+    setIsMenuOpen(false);
+
+    // Dispatch custom event
+    window.dispatchEvent(new CustomEvent("userLoggedOut"));
+
+    // Redirect to login page
+    window.location.href = "/login";
+  }, []);
+
+  const closeMenuOnly = useCallback(() => {
+    setIsMenuOpen(false);
+  }, []);
 
   const NavLink = React.memo(
     ({
@@ -191,12 +279,17 @@ const Header = () => {
     }) => {
       const isFeaturesPath = pathname.startsWith("/features");
       const isAboutPath = pathname === "/about" || pathname === "/blog";
+      const isNutritionPath =
+        pathname === "/food-analyzer" || pathname === "/food-recommendation";
+
       const isActive =
         isActiveOverride !== undefined
           ? isActiveOverride
           : isFeaturesPath && href === "#other-features-dropdown"
           ? true
           : isAboutPath && href === "#about-dropdown"
+          ? true
+          : isNutritionPath && href === "#nutrition-dropdown"
           ? true
           : pathname === href;
 
@@ -282,6 +375,33 @@ const Header = () => {
   });
   ListItem.displayName = "ListItem";
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <header
+        ref={headerRef}
+        className="fixed top-0 left-0 right-0 z-[60] py-4 bg-gradient-to-r from-black/50 via-zinc-900/50 to-black/50 backdrop-blur-md"
+      >
+        <div className="container mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-between h-14">
+          <Link
+            href="/"
+            className="flex items-center text-white font-extrabold text-2xl md:text-3xl group"
+            aria-label="GYM BRO Home"
+          >
+            <Dumbbell
+              className="h-7 w-7 md:h-8 md:w-8 mr-3 text-indigo-400"
+              aria-hidden="true"
+            />
+            <span className="tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500">
+              GYM BRO
+            </span>
+          </Link>
+          <div className="text-gray-400 text-sm">Loading...</div>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <>
       <header
@@ -293,11 +413,7 @@ const Header = () => {
             : "py-4 bg-gradient-to-r from-black/50 via-zinc-900/50 to-black/50 backdrop-blur-md"
         )}
       >
-        <div
-          className={cn(
-            "container mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-between h-14"
-          )}
-        >
+        <div className="container mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-between h-14">
           <Link
             href="/"
             className="flex items-center text-white font-extrabold text-2xl md:text-3xl group"
@@ -465,7 +581,7 @@ const Header = () => {
                   </NavigationMenuItem>
                   <NavigationMenuItem>
                     <Button
-                      onClick={handleLoginLogout}
+                      onClick={handleLogout}
                       variant="outline"
                       size="sm"
                       className="border-indigo-500/50 text-indigo-300 bg-zinc-900/50 hover:bg-indigo-500 hover:text-white text-xs ml-3 rounded-xl"
@@ -499,16 +615,6 @@ const Header = () => {
                   >
                     <Link href="/register">Get Started</Link>
                   </Button>
-                  {process.env.NODE_ENV === "development" && (
-                    <Button
-                      onClick={handleLoginLogout}
-                      variant="link"
-                      size="sm"
-                      className="text-xs text-gray-400 hover:text-indigo-300 px-1 h-auto py-0"
-                    >
-                      (Simulate Login)
-                    </Button>
-                  )}
                 </div>
               )}
             </NavigationMenuList>
@@ -627,7 +733,7 @@ const Header = () => {
                   </NavLink>
                   <div className="pt-8">
                     <Button
-                      onClick={handleLoginLogout}
+                      onClick={handleLogout}
                       variant="outline"
                       size="lg"
                       className="w-full border-indigo-500/50 text-indigo-300 bg-zinc-900/50 hover:bg-indigo-500 hover:text-white py-4 text-base rounded-xl"
@@ -656,19 +762,6 @@ const Header = () => {
                 </>
               )}
             </div>
-
-            {!isLoggedIn && process.env.NODE_ENV === "development" && (
-              <div className="pt-4 mt-auto border-t border-zinc-700/50">
-                <Button
-                  onClick={handleLoginLogout}
-                  variant="secondary"
-                  size="lg"
-                  className="w-full text-sm py-4 bg-zinc-700/50 hover:bg-zinc-600/50 text-indigo-300 rounded-xl"
-                >
-                  (Simulate Login)
-                </Button>
-              </div>
-            )}
           </motion.div>
         )}
       </AnimatePresence>

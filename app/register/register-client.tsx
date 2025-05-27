@@ -1,25 +1,32 @@
-"use client"
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, UserPlus, Loader2 } from 'lucide-react';
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import axios from "axios";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Eye, EyeOff, UserPlus, Loader2 } from "lucide-react";
 
-const registerSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters long, Bro.'),
-  email: z.string().email('Please enter a valid email address, Future Legend.'),
-  password: z.string().min(8, 'Password must be at least 8 characters long. Make it strong!'),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match, Bro. Try again!",
-  path: ["confirmPassword"],
-});
+const registerSchema = z
+  .object({
+    name: z.string().min(2, "Name must be at least 2 characters long, Bro."),
+    email: z
+      .string()
+      .email("Please enter a valid email address, Future Legend."),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters long. Make it strong!"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match, Bro. Try again!",
+    path: ["confirmPassword"],
+  });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
@@ -36,26 +43,57 @@ export default function RegisterClient() {
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-    }
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
   });
 
   const onSubmit = async (data: RegisterFormValues) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast({
-        title: "Account Created!",
-        description: "Welcome to the GYM BRO community! Time to get those gains. Please log in.",
+      // Call the register API using Axios
+      const response = await axios.post("http://localhost:3000/api/register", {
+        fullName: data.name,
+        email: data.email,
+        password: data.password,
+        confirmPassword: data.confirmPassword,
       });
-      router.push('/login');
-    } catch (error) {
+
+      const result = response.data;
+
+      if (!result.success) {
+        // Handle API errors
+        if (result.error) {
+          throw new Error(result.error);
+        }
+        // Handle validation errors
+        if (result.validationError && result.validationError.length > 0) {
+          const errorMessages = result.validationError
+            .map((err: any) => err.message)
+            .join(", ");
+          throw new Error(errorMessages);
+        }
+        throw new Error("Registration failed");
+      }
+
+      // Show success toast
+      toast({
+        title: "Account Created Successfully!",
+        description: "Please login with your new account credentials.",
+      });
+
+      // Redirect to login page
+      router.push("/login");
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.error ||
+        error.message ||
+        "Something went wrong. Please try again, Bro.";
       toast({
         variant: "destructive",
-        title: "Registration Failed (Simulated)",
-        description: "Something went wrong. Please try again, Bro.",
+        title: "Registration Failed",
+        description: errorMessage,
       });
     }
   };
@@ -65,19 +103,28 @@ export default function RegisterClient() {
       <div className="w-full max-w-md space-y-8 bg-zinc-900 p-8 md:p-10 rounded-xl shadow-2xl">
         <div className="text-center">
           <UserPlus size={40} className="mx-auto mb-4 text-primary" />
-          <h2 className="text-3xl font-bold text-white">Become a <span className="text-primary">GYM BRO</span></h2>
-          <p className="text-gray-400 mt-2">Unlock personalized fitness. Join the elite.</p>
+          <h2 className="text-3xl font-bold text-white">
+            Become a <span className="text-primary">GYM BRO</span>
+          </h2>
+          <p className="text-gray-400 mt-2">
+            Unlock personalized fitness. Join the elite.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">Full Name</label>
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-gray-300 mb-1"
+            >
+              Full Name
+            </label>
             <Input
               id="name"
               type="text"
               className="bg-zinc-800 border-zinc-700 text-white placeholder-gray-500"
               placeholder="Your Name, Future Legend"
-              {...register('name')}
+              {...register("name")}
             />
             {errors.name && (
               <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
@@ -85,28 +132,40 @@ export default function RegisterClient() {
           </div>
 
           <div>
-            <label htmlFor="emailReg" className="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
+            <label
+              htmlFor="emailReg"
+              className="block text-sm font-medium text-gray-300 mb-1"
+            >
+              Email Address
+            </label>
             <Input
               id="emailReg"
               type="email"
               className="bg-zinc-800 border-zinc-700 text-white placeholder-gray-500"
               placeholder="you@example.com"
-              {...register('email')}
+              {...register("email")}
             />
             {errors.email && (
-              <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+              <p className="text-red-500 text-xs mt-1">
+                {errors.email.message}
+              </p>
             )}
           </div>
 
           <div>
-            <label htmlFor="passwordReg" className="block text-sm font-medium text-gray-300 mb-1">Create Password</label>
+            <label
+              htmlFor="passwordReg"
+              className="block text-sm font-medium text-gray-300 mb-1"
+            >
+              Create Password
+            </label>
             <div className="relative">
               <Input
                 id="passwordReg"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 className="bg-zinc-800 border-zinc-700 text-white pr-10 placeholder-gray-500"
                 placeholder="Min. 8 Characters, Make it Strong!"
-                {...register('password')}
+                {...register("password")}
               />
               <button
                 type="button"
@@ -118,31 +177,44 @@ export default function RegisterClient() {
               </button>
             </div>
             {errors.password && (
-              <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
+              <p className="text-red-500 text-xs mt-1">
+                {errors.password.message}
+              </p>
             )}
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-1">Confirm Password</label>
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-gray-300 mb-1"
+            >
+              Confirm Password
+            </label>
             <div className="relative">
               <Input
                 id="confirmPassword"
-                type={showConfirmPassword ? 'text' : 'password'}
+                type={showConfirmPassword ? "text" : "password"}
                 className="bg-zinc-800 border-zinc-700 text-white pr-10 placeholder-gray-500"
                 placeholder="Repeat Your Strong Password"
-                {...register('confirmPassword')}
+                {...register("confirmPassword")}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                aria-label={
+                  showConfirmPassword
+                    ? "Hide confirm password"
+                    : "Show confirm password"
+                }
               >
                 {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
             {errors.confirmPassword && (
-              <p className="text-red-500 text-xs mt-1">{errors.confirmPassword.message}</p>
+              <p className="text-red-500 text-xs mt-1">
+                {errors.confirmPassword.message}
+              </p>
             )}
           </div>
 
@@ -152,12 +224,15 @@ export default function RegisterClient() {
             disabled={isSubmitting}
           >
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isSubmitting ? 'Creating Account...' : 'Create My GYM BRO Account'}
+            {isSubmitting ? "Creating Account..." : "Create My GYM BRO Account"}
           </Button>
 
           <p className="text-center text-sm text-gray-400">
-            Already a Bro?{' '}
-            <Link href="/login" className="font-medium text-primary hover:underline">
+            Already a Bro?{" "}
+            <Link
+              href="/login"
+              className="font-medium text-primary hover:underline"
+            >
               Sign In Here
             </Link>
           </p>

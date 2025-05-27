@@ -112,7 +112,7 @@ export default function AboutContentClient() {
           >
             <Feather
               size={52}
-              className="mx-auto mb-8 text-primary opacity-80"
+              className="mx-auto mb-8 text-white opacity-80"
             />
             <h1 className="text-5xl sm:text-6xl md:text-7xl xl:text-8xl font-black text-white leading-none tracking-tighter mb-6">
               The <BroText>GYM BRO</BroText> Manifesto.

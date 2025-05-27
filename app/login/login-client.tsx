@@ -1,19 +1,20 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, LogIn, Loader2 } from 'lucide-react';
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import axios from "axios";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address, Bro.'),
-  password: z.string().min(6, 'Password must be at least 6 characters, Champ.'),
+  email: z.string().email("Invalid email address, Bro."),
+  password: z.string().min(6, "Password must be at least 6 characters, Champ."),
   rememberMe: z.boolean().optional(),
 });
 
@@ -32,49 +33,134 @@ export default function LoginClient() {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
       rememberMe: false,
-    }
+    },
   });
 
   useEffect(() => {
-    const rememberedEmail = localStorage.getItem('rememberedUserEmailGYMBRO');
+    const rememberedEmail = localStorage.getItem("rememberedUserEmailGYMBRO");
     if (rememberedEmail) {
-      setValue('email', rememberedEmail);
-      setValue('rememberMe', true);
+      setValue("email", rememberedEmail);
+      setValue("rememberMe", true);
     }
   }, [setValue]);
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Panggil API login menggunakan axios
+      const loginResponse = await axios.post(
+        "http://localhost:3000/api/login",
+        {
+          email: data.email,
+          password: data.password,
+        }
+      );
 
-      if (data.rememberMe) {
-        localStorage.setItem('rememberedUserEmailGYMBRO', data.email);
-      } else {
-        localStorage.removeItem('rememberedUserEmailGYMBRO');
+      const loginResult = loginResponse.data;
+
+      if (!loginResult.success) {
+        throw new Error(loginResult.message || "Login gagal");
       }
 
-      localStorage.setItem('isLoggedInGYMBRO', 'true');
-      const DUMMY_PROFILE_DATA = {
-        name: 'John Doe', // Anda bisa mengambil ini dari data.name jika ada di form
-        username: data.email.split('@')[0],
-        email: data.email,
-      };
-      localStorage.setItem('gymBroUserProfile', JSON.stringify(DUMMY_PROFILE_DATA));
+      // Simpan token ke localStorage
+      const token = loginResult.token;
+      localStorage.setItem("tokenGYMBRO", token);
 
+      // Simpan remember me preference
+      if (data.rememberMe) {
+        localStorage.setItem("rememberedUserEmailGYMBRO", data.email);
+      } else {
+        localStorage.removeItem("rememberedUserEmailGYMBRO");
+      }
+
+      // Set login status
+      localStorage.setItem("isLoggedInGYMBRO", "true");
+
+      // Ambil data lengkap pengguna dari endpoint /user/:email menggunakan axios
+      const userResponse = await axios.get(
+        `http://localhost:3000/api/user/${data.email}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const userResult = userResponse.data;
+
+      if (!userResult.success) {
+        throw new Error(userResult.message || "Failed to fetch user data");
+      }
+
+      // Simpan data lengkap ke localStorage
+      const userProfile = {
+        email: userResult.data.email,
+        username: userResult.data.email.split("@")[0],
+        name: userResult.data.fullName || "Unknown User",
+        dateOfBirth: userResult.data.date || "",
+        age: userResult.data.age || undefined,
+        gender:
+          userResult.data.gender === "Laki-laki"
+            ? "male"
+            : userResult.data.gender === "Perempuan"
+            ? "female"
+            : userResult.data.gender === "Lainnya"
+            ? "other"
+            : "prefer_not_to_say",
+        heightCm: userResult.data.height || undefined,
+        currentWeightKg: userResult.data.weight || undefined,
+        healthInfo: {
+          bloodPressure: userResult.data.BloodPressure
+            ? `${userResult.data.BloodPressure.systolic}/${userResult.data.BloodPressure.diastolic}`
+            : "",
+          bloodGlucose: userResult.data.FastingGlucose
+            ? userResult.data.FastingGlucose.toString()
+            : "",
+          notes: "",
+        },
+        socialMedia: {
+          instagram: "",
+          twitter: "",
+          website: "",
+          linkedin: "",
+        },
+        avatarUrl: "/path/to/default/avatar.png",
+      };
+
+      localStorage.setItem("gymBroUserProfile", JSON.stringify(userProfile));
+
+      // Dispatch custom event untuk update Header
+      window.dispatchEvent(new CustomEvent("userLoggedIn"));
 
       toast({
         title: "Login Success!",
         description: "Welcome back, Bro! Getting you in...",
       });
-      router.push('/profile');
-    } catch (error) {
+
+      // Tambah delay kecil sebelum redirect untuk memastikan event terproses
+      setTimeout(() => {
+        router.push("/profile");
+      }, 100);
+    } catch (error: any) {
+      // Axios error handling
+      let errorMessage = "Invalid credentials. Try again, Legend!";
+
+      if (axios.isAxiosError(error)) {
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
         variant: "destructive",
-        title: "Login Failed (Simulated)",
-        description: "Invalid credentials or simulated error. Try again, Legend!",
+        title: "Login Failed",
+        description: errorMessage,
       });
     }
   };
@@ -85,33 +171,47 @@ export default function LoginClient() {
         <div className="text-center">
           <LogIn size={40} className="mx-auto mb-4 text-primary" />
           <h2 className="text-3xl font-bold text-white">Welcome Back, Bro!</h2>
-          <p className="text-gray-400 mt-2">Ready to crush those goals? Sign in.</p>
+          <p className="text-gray-400 mt-2">
+            Ready to crush those goals? Sign in.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-300 mb-1"
+            >
+              Email Address
+            </label>
             <Input
               id="email"
               type="email"
               className="bg-zinc-800 border-zinc-700 text-white placeholder-gray-500"
               placeholder="you@example.com"
-              {...register('email')}
+              {...register("email")}
             />
             {errors.email && (
-              <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+              <p className="text-red-500 text-xs mt-1">
+                {errors.email.message}
+              </p>
             )}
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">Password</label>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-300 mb-1"
+            >
+              Password
+            </label>
             <div className="relative">
               <Input
                 id="password"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 className="bg-zinc-800 border-zinc-700 text-white pr-10 placeholder-gray-500"
                 placeholder="Your Strong Password"
-                {...register('password')}
+                {...register("password")}
               />
               <button
                 type="button"
@@ -123,7 +223,9 @@ export default function LoginClient() {
               </button>
             </div>
             {errors.password && (
-              <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
+              <p className="text-red-500 text-xs mt-1">
+                {errors.password.message}
+              </p>
             )}
           </div>
 
@@ -133,27 +235,38 @@ export default function LoginClient() {
                 id="rememberMe"
                 type="checkbox"
                 className="h-4 w-4 text-primary bg-zinc-700 border-zinc-600 rounded focus:ring-primary focus:ring-offset-zinc-900 cursor-pointer"
-                {...register('rememberMe')}
+                {...register("rememberMe")}
               />
-              <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-300 cursor-pointer">Remember me</label>
+              <label
+                htmlFor="rememberMe"
+                className="ml-2 block text-sm text-gray-300 cursor-pointer"
+              >
+                Remember me
+              </label>
             </div>
-            <Link href="/forgot-password" className="text-sm text-primary/80 hover:text-primary hover:underline">
+            <Link
+              href="/forgot-password"
+              className="text-sm text-primary/80 hover:text-primary hover:underline"
+            >
               Forgot password?
             </Link>
           </div>
 
           <Button
             type="submit"
-            className="w-full font-semibold py-3" // Tombol sudah menggunakan variant default (primary)
+            className="w-full font-semibold py-3"
             disabled={isSubmitting}
           >
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isSubmitting ? 'Signing In...' : 'Sign In & Get Gains'}
+            {isSubmitting ? "Signing In..." : "Sign In & Get Gains"}
           </Button>
 
           <p className="text-center text-sm text-gray-400">
-            Not a Bro yet?{' '}
-            <Link href="/register" className="font-medium text-primary hover:underline">
+            Not a Bro yet?{" "}
+            <Link
+              href="/register"
+              className="font-medium text-primary hover:underline"
+            >
               Join the Movement
             </Link>
           </p>

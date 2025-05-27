@@ -455,27 +455,28 @@ export default function BmiCalculatorClient() {
                     Your Metrics
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-7 pt-2">
+                <CardContent className="space-y-8 pt-2">
+                  {/* Gender & Unit System */}
                   <div className="grid grid-cols-2 gap-x-4 gap-y-5">
+                    {/* Gender */}
                     <div>
                       <Label className="text-sm font-medium text-white mb-2 block">
                         Gender
                       </Label>
                       <RadioGroup
-                        defaultValue={gender}
                         value={gender}
                         onValueChange={(value) => setGender(value as Gender)}
-                        className="flex space-x-3"
+                        className="flex space-x-4"
                       >
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem
                             value="male"
                             id="male"
-                            className="border-white text-primary focus:ring-primary"
+                            className="border-white text-white focus:ring-white"
                           />
                           <Label
                             htmlFor="male"
-                            className="text-gray-200 text-sm cursor-pointer"
+                            className="text-white text-sm cursor-pointer"
                           >
                             Male
                           </Label>
@@ -484,40 +485,37 @@ export default function BmiCalculatorClient() {
                           <RadioGroupItem
                             value="female"
                             id="female"
-                            className="border-white text-primary focus:ring-primary"
+                            className="border-white text-white focus:ring-white"
                           />
                           <Label
                             htmlFor="female"
-                            className="text-gray-200 text-sm cursor-pointer"
+                            className="text-white text-sm cursor-pointer"
                           >
                             Female
                           </Label>
                         </div>
                       </RadioGroup>
                     </div>
+
+                    {/* Unit System */}
                     <div>
-                      <Label className="text-sm font-medium text-white mb-2 block">
+                      <Label className="text-sm font-medium text-zinc-300 mb-2 block">
                         Unit System
                       </Label>
-                      <Select
-                        value={unitSystem}
-                        onValueChange={(value) =>
-                          setUnitSystem(value as UnitSystem)
-                        }
-                      >
-                        <SelectTrigger className="w-full bg-zinc-800 border-zinc-700 text-white focus:ring-primary text-sm h-10">
+                      <Select value={unitSystem} onValueChange={setUnitSystem}>
+                        <SelectTrigger className="w-full bg-zinc-800 border border-zinc-700 text-white focus:ring-2 focus:ring-primary text-sm h-10">
                           <SelectValue placeholder="Select system" />
                         </SelectTrigger>
-                        <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                        <SelectContent className="bg-zinc-800 border border-zinc-700 text-white">
                           <SelectItem
                             value="metric"
-                            className="hover:bg-zinc-700 focus:bg-zinc-700 text-sm"
+                            className="text-white text-sm hover:bg-zinc-700 focus:bg-zinc-700 focus:text-white"
                           >
                             Metric ({heightUnit}, {weightUnit})
                           </SelectItem>
                           <SelectItem
                             value="imperial"
-                            className="hover:bg-zinc-700 focus:bg-zinc-700 text-sm"
+                            className="text-white text-sm hover:bg-zinc-700 focus:bg-zinc-700 focus:text-white"
                           >
                             Imperial ({heightUnit}, {weightUnit})
                           </SelectItem>
@@ -526,63 +524,69 @@ export default function BmiCalculatorClient() {
                     </div>
                   </div>
 
-                  <div className="space-y-2 pt-1">
-                    <div className="flex justify-between items-center mb-2">
-                      <Label
-                        htmlFor="height"
-                        className="text-sm font-medium text-white"
-                      >
-                        Height ({heightUnit})
-                      </Label>
-                      <Input
-                        type="number"
-                        id="height"
-                        value={String(height)}
-                        onChange={handleHeightInputChange}
-                        className="w-32 text-center bg-zinc-800 border-zinc-700 text-white focus:ring-primary h-10 text-base font-semibold"
+                  {/* Height & Weight Section */}
+                  <div className="space-y-6">
+                    {/* Height */}
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center gap-4">
+                        <Label
+                          htmlFor="height"
+                          className="text-sm font-medium text-zinc-300"
+                        >
+                          Height ({heightUnit})
+                        </Label>
+                        <Input
+                          type="number"
+                          id="height"
+                          value={String(height)}
+                          onChange={handleHeightInputChange}
+                          className="w-32 text-center bg-zinc-800 border border-zinc-700 text-white focus:ring-2 focus:ring-primary h-10 text-base font-semibold"
+                          min={minHeight}
+                          max={maxHeight}
+                        />
+                      </div>
+                      <Slider
+                        value={[height]}
+                        onValueChange={handleHeightChangeSlider}
                         min={minHeight}
                         max={maxHeight}
+                        step={1}
+                        className="h-3.5 [&>span]:bg-zinc-700 [&>span]:rounded-full [&>span>span]:bg-gradient-to-r [&>span>span]:from-primary/80 [&>span>span]:to-primary [&>span>span]:rounded-full [&>span>span]:transition-colors"
                       />
                     </div>
-                    <Slider
-                      value={[height]}
-                      onValueChange={handleHeightChangeSlider}
-                      min={minHeight}
-                      max={maxHeight}
-                      step={1}
-                      className="[&>span>span]:bg-gradient-to-r [&>span>span]:from-primary/80 [&>span>span]:to-primary [&>span]:bg-zinc-700 h-3.5"
-                    />
-                  </div>
 
-                  <div className="space-y-2 pt-1">
-                    <div className="flex justify-between items-center mb-2">
-                      <Label
-                        htmlFor="weight"
-                        className="text-sm font-medium text-white"
-                      >
-                        Weight ({weightUnit})
-                      </Label>
-                      <Input
-                        type="number"
-                        id="weight"
-                        value={String(weight)}
-                        onChange={handleWeightInputChange}
-                        className="w-32 text-center bg-zinc-800 border-zinc-700 text-white focus:ring-primary h-10 text-base font-semibold"
+                    {/* Weight */}
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center gap-4">
+                        <Label
+                          htmlFor="weight"
+                          className="text-sm font-medium text-zinc-300"
+                        >
+                          Weight ({weightUnit})
+                        </Label>
+                        <Input
+                          type="number"
+                          id="weight"
+                          value={String(weight)}
+                          onChange={handleWeightInputChange}
+                          className="w-32 text-center bg-zinc-800 border border-zinc-700 text-white focus:ring-2 focus:ring-primary h-10 text-base font-semibold"
+                          min={minWeight}
+                          max={maxWeight}
+                          step={unitSystem === "metric" ? 0.1 : 1}
+                        />
+                      </div>
+                      <Slider
+                        value={[weight]}
+                        onValueChange={handleWeightChangeSlider}
                         min={minWeight}
                         max={maxWeight}
                         step={unitSystem === "metric" ? 0.1 : 1}
+                        className="h-3.5 [&>span]:bg-zinc-700 [&>span]:rounded-full [&>span>span]:bg-gradient-to-r [&>span>span]:from-primary/80 [&>span>span]:to-primary [&>span>span]:rounded-full [&>span>span]:transition-colors"
                       />
                     </div>
-                    <Slider
-                      value={[weight]}
-                      onValueChange={handleWeightChangeSlider}
-                      min={minWeight}
-                      max={maxWeight}
-                      step={unitSystem === "metric" ? 0.1 : 1}
-                      className="[&>span>span]:bg-gradient-to-r [&>span>span]:from-primary/80 [&>span>span]:to-primary [&>span]:bg-zinc-700 h-3.5"
-                    />
                   </div>
 
+                  {/* Submit Button */}
                   <Button
                     onClick={handleSubmitCalculation}
                     disabled={isCalculating}
@@ -657,7 +661,7 @@ export default function BmiCalculatorClient() {
                             )
                           </p>
                           <Separator className="bg-zinc-700/60 my-4" />
-                          <p className="text-sm text-white leading-relaxed">
+                          <p className="text-sm text-gray-300 leading-relaxed">
                             {displayBmiCategory.advice}
                           </p>
                         </CardContent>
