@@ -406,10 +406,12 @@ export default function ProfileClient() {
       }
 
       let email = "";
+      let currentUsername = "";
       if (userProfile) {
         try {
           const parsedProfile = JSON.parse(userProfile);
           email = parsedProfile.email || "";
+          currentUsername = parsedProfile.username || "";
         } catch (e) {
           console.error("Failed to parse userProfile:", e);
         }
@@ -435,10 +437,16 @@ export default function ProfileClient() {
         throw new Error(result.message || "Failed to fetch user data");
       }
 
+      // Use the server's username if available, otherwise keep the current username
+      const username =
+        result.data.username ||
+        currentUsername ||
+        result.data.email.split("@")[0];
+
       const updatedUserProfile: UserProfileData = {
         id: result.data._id || "unknown",
         name: result.data.fullName || "Unknown User",
-        username: result.data.username || email.split("@")[0],
+        username: username,
         email: email,
         avatarUrl: result.data.avatarUrl || "/path/to/default/avatar.png",
         dateOfBirth: result.data.date
@@ -475,6 +483,8 @@ export default function ProfileClient() {
 
       setUserData(updatedUserProfile);
       setUser(updatedUserProfile);
+
+      // Update localStorage with fresh data
       localStorage.setItem(
         "gymBroUserProfile",
         JSON.stringify(updatedUserProfile)
@@ -530,6 +540,37 @@ export default function ProfileClient() {
         throw new Error("No email found in userProfile");
       }
 
+      // Handle avatar upload if there's a new file
+      let avatarUrl = user?.avatarUrl;
+      if (data.avatarFile) {
+        const formData = new FormData();
+        formData.append("file", data.avatarFile);
+
+        try {
+          const uploadResponse = await axios.post(
+            "http://localhost:3000/api/upload",
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (uploadResponse.data.success) {
+            avatarUrl = uploadResponse.data.url;
+          }
+        } catch (error) {
+          console.error("Error uploading avatar:", error);
+          toast({
+            variant: "destructive",
+            title: "Avatar Upload Failed",
+            description: "Failed to upload profile picture. Please try again.",
+          });
+        }
+      }
+
       const bloodPressureParts = data.bloodPressure?.split("/") || [];
       const updateData = {
         email,
@@ -564,6 +605,7 @@ export default function ProfileClient() {
           linkedin: data.linkedin || null,
           website: data.website || null,
         },
+        avatarUrl: avatarUrl,
       };
 
       const response = await axios.put(
@@ -581,15 +623,18 @@ export default function ProfileClient() {
         throw new Error(result.message || "Failed to update user data");
       }
 
+      // Update local storage with new data immediately
       const updatedProfile = {
         ...parsedProfile,
+        fullName: data.name,
+        username: data.username, // Make sure username is updated
         name: data.name,
-        username: data.username,
         dateOfBirth: data.dateOfBirth,
         gender: data.gender,
         heightCm: data.heightCm,
         currentWeightKg: data.currentWeightKg,
         bio: data.bio,
+        avatarUrl: avatarUrl,
         healthInfo: {
           bloodPressure: data.bloodPressure,
           bloodGlucose: data.bloodGlucose,
@@ -603,8 +648,14 @@ export default function ProfileClient() {
         },
       };
 
+      // Update localStorage
       localStorage.setItem("gymBroUserProfile", JSON.stringify(updatedProfile));
 
+      // Update state
+      setUser(updatedProfile);
+      setUserData(updatedProfile);
+
+      // Fetch fresh data to ensure everything is in sync
       await fetchUserData();
 
       toast({
@@ -657,7 +708,13 @@ export default function ProfileClient() {
     if (storedProfileString) {
       try {
         const parsedProfile = JSON.parse(storedProfileString);
-        loadedProfile = { ...initialUserProfile, ...parsedProfile };
+        // Ensure we're using the correct username from the profile
+        loadedProfile = {
+          ...initialUserProfile,
+          ...parsedProfile,
+          username:
+            parsedProfile.username || parsedProfile.email?.split("@")[0] || "",
+        };
       } catch (e) {
         console.error("Failed to parse profile from localStorage", e);
       }
@@ -920,11 +977,11 @@ export default function ProfileClient() {
                                 <RadioGroupItem
                                   value={option}
                                   id={`gender-${option}`}
-                                  className="border-primary text-primary"
+                                  className="border-2 border-sky-500 text-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:text-white hover:border-sky-400 transition-colors"
                                 />
                                 <Label
                                   htmlFor={`gender-${option}`}
-                                  className="font-normal text-white capitalize cursor-pointer hover:text-primary"
+                                  className="font-normal text-gray-300 capitalize cursor-pointer hover:text-sky-500 transition-colors"
                                 >
                                   {option
                                     .replace(/_/g, " ")

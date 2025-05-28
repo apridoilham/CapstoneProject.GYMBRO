@@ -26,6 +26,7 @@ export async function GET(
 	  const finalData = {
 		email: user.email,
 		fullName: user.fullName,
+		username: user.username || user.email.split('@')[0],
 		date: user.date ?? null,
 		age: user.age ?? null,
 		gender: user.gender ?? null,
@@ -33,6 +34,10 @@ export async function GET(
 		weight: user.weight ?? null,
 		BloodPressure: user.BloodPressure ?? null,
 		FastingGlucose: user.FastingGlucose ?? null,
+		bio: user.bio ?? null,
+		healthNotes: user.healthNotes ?? null,
+		socialMedia: user.socialMedia ?? null,
+		avatarUrl: user.avatarUrl ?? null,
 	  };
   
 	  return NextResponse.json({ data: finalData, success: true });

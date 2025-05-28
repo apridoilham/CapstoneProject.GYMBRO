@@ -18,6 +18,8 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
 
     const {
       email,
+      fullName,
+      username,
       date,
       age,
       gender,
@@ -25,6 +27,10 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
       weight,
       BloodPressure,
       FastingGlucose,
+      bio,
+      healthNotes,
+      socialMedia,
+      avatarUrl,
     } = await req.json();
 
     // Validasi email wajib
@@ -54,6 +60,8 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
     await connectDB();
 
     const updateData: any = { isComplete: true };
+    if (fullName) updateData.fullName = fullName;
+    if (username) updateData.username = username;
     if (date) updateData.date = date;
     if (age) updateData.age = age;
     if (gender) updateData.gender = gender;
@@ -61,6 +69,10 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
     if (weight) updateData.weight = weight;
     if (BloodPressure) updateData.BloodPressure = BloodPressure;
     if (FastingGlucose) updateData.FastingGlucose = FastingGlucose;
+    if (bio) updateData.bio = bio;
+    if (healthNotes) updateData.healthNotes = healthNotes;
+    if (socialMedia) updateData.socialMedia = socialMedia;
+    if (avatarUrl) updateData.avatarUrl = avatarUrl;
 
     const user = await UsersModel.findOneAndUpdate(
       { email },

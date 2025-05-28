@@ -38,7 +38,9 @@ export async function POST(req: NextRequest) {
         token,
         data: {
           email: user.email,
-          username: user.email.split('@')[0],
+          username: user.username || user.email.split('@')[0],
+          fullName: user.fullName,
+          avatarUrl: user.avatarUrl,
         },
       },
       { status: 200 }
