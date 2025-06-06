@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
-		if (await comparePassword(password, user.password)) {
+		if (!(await comparePassword(password, user.password))) {
 			return NextResponse.json(
 				{ message: "Password is incorrect.", success: false },
 				{ status: 400 }

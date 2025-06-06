@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
-		const hashPass = await hashPassword(password.toLowerCase());
+		const hashPass = await hashPassword(password);
 		const newUser = {
 			email,
 			fullName,

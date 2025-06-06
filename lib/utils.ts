@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import cloudinary from "@/lib/cloudinary";
 import { NextRequest } from "next/server";
 
 export function cn(...inputs: ClassValue[]) {
@@ -162,5 +163,34 @@ export function verifyUser(req: NextRequest) {
 		return decoded;
 	} catch (error) {
 		return null;
+	}
+}
+
+export function extractPublicId(imageUrl: any) {
+	const regex = /\/upload\/(?:v\d+\/)?([^\.]+)/;
+	const match = imageUrl.match(regex);
+	if (match && match[1]) {
+		return match[1];
+	}
+	return null;
+}
+
+export async function checkIfImageExists(publicId: string) {
+	try {
+		const result = await cloudinary.api.resource(publicId);
+		console.log("Resource found:", result);
+		return true;
+	} catch (err) {
+		if (
+			typeof err === "object" &&
+			err !== null &&
+			"http_code" in err &&
+			(err as any).http_code === 404
+		) {
+			console.log("Resource not found");
+			return false;
+		} else {
+			throw err; // error lain
+		}
 	}
 }

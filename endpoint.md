@@ -103,7 +103,7 @@ PUT /user
 
 | Nama            | Tipe    | Deskripsi                                 |
 |-----------------|---------|-------------------------------------------|
-| Content-Type    | string  | `application/json`                        |
+| Content-Type    | string  | `multipart/form-data`                     |
 | Authorization   | string  | `Bearer <token>`                          |
 
 ## Contoh Request
@@ -111,7 +111,7 @@ PUT /user
 ```http
 PUT /user
 Host: api.example.com
-Content-Type: application/json
+Content-Type: multipart/form-data
 Authorization: Bearer <token>
 ```
 
@@ -119,51 +119,52 @@ Authorization: Bearer <token>
 ```
 NOTE
 Untuk bagian date pastikan valid date yang ada di js new Date()
+BloodPressure harus diubah ke JSON.stringify(data) dengan isi object yang sama
 ```
 
-```json
-{
-  "email": "coba2@gmail.com",
-  "date": "2025-05-20T13:45:00.000Z",
-  "age": 20,
-  "gender": "Perempuan",
-  "height": 150,
-  "weight": 45,
-  "BloodPressure": {
-    "systolic": 130,
-    "diastolic": 80
-  },
-  "FastingGlucose": 95
-}
+```
+Form Data
+"image": <file>
+"email": "coba2@gmail.com",
+"date": "2025-05-20T13:45:00.000Z",
+"age": 20,
+"gender": "Perempuan",
+"height": 150,
+"weight": 45,
+"BloodPressure": {
+  "systolic": 130,
+  "diastolic": 80
+},
+"FastingGlucose": 95
 ```
 
 ## Output
 
 ```json
 {
-  "message": "Update success",
-  "success": true,
-  "user": {
-    "_id": "682d300247f35e941acdd17b",
-    "email": "coba2@gmail.com",
-    "fullName": "Ccoba 2",
-    "password": "$2b$10$TfJqWPdaoBfJkD6hT.2XjOwVj/oqq7WZi90Mm.O/YL5SoRwAYp8W.",
-    "isComplete": true,
-    "__v": 0,
-    "BloodPressure": {
-      "systolic": 130,
-      "diastolic": 80
-    },
-    "FastingGlucose": 95,
-    "age": 20,
-    "date": "2025-05-20T13:45:00.000Z",
-    "gender": "Perempuan",
-    "height": 140,
-    "weight": 45
-  }
+	"message": "Update success",
+	"success": true,
+	"data": {
+		"_id": "682d300247f35e941acdd17b",
+		"email": "coba2@gmail.com",
+		"fullName": "Gym Admin",
+		"password": "$2b$10$TfJqWPdaoBfJkD6hT.2XjOwVj/oqq7WZi90Mm.O/YL5SoRwAYp8W.",
+		"isComplete": true,
+		"__v": 0,
+		"BloodPressure": {
+			"systolic": 130,
+			"diastolic": 80
+		},
+		"FastingGlucose": 95,
+		"age": 20,
+		"date": "2025-05-20T13:45:00.000Z",
+		"gender": "Perempuan",
+		"height": 150,
+		"weight": 45,
+		"imageUrl": "https://res.cloudinary.com/dfnkfefds/image/upload/v1749203039/profile_picture/evmszaszbfznfkj6rwou.jpg"
+	}
 }
 ```
-
 
 # Endpoint: `/user/:email`
 

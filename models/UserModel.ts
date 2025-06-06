@@ -47,6 +47,10 @@ const UsersSchema = new mongoose.Schema({
 		required: true,
 		default: false,
 	},
+	imageUrl: {
+		type: String,
+		required: false,
+	},
 });
 
 const UsersModel = models.Users || model("Users", UsersSchema);

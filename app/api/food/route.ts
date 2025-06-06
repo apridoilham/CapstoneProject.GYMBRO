@@ -59,7 +59,8 @@ export async function POST(req: NextRequest) {
 		});
 
 		try {
-			const rawData = String(result.data).split(" ")[0];
+			const dataArr = result.data as Array<{ label: string }>;
+			const rawData = dataArr[0].label;
 			const data = await FoodModel.findOne({ name: rawData });
 
 			const dataLog = { foodId: data._id, imgUrl: imageUrl, date: new Date() };
