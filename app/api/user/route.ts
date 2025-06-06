@@ -1,7 +1,10 @@
 import { connectDB } from "@/lib/connection";
-import cloudinary from "@/lib/cloudinary";
+import cloudinary, {
+	extractPublicId,
+	checkIfImageExists,
+} from "@/lib/cloudinary";
 import streamifier from "streamifier";
-import { verifyUser, extractPublicId, checkIfImageExists } from "@/lib/utils";
+import { verifyUser } from "@/lib/utils";
 import UsersModel from "@/models/UserModel";
 import { NextRequest, NextResponse } from "next/server";
 
