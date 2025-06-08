@@ -67,12 +67,6 @@ const nutritionItems: NavItem[] = [
     icon: Camera,
     description: "Analyze nutritional content of your food.",
   },
-  {
-    href: "/food-recommendation",
-    label: "Food Recommendation",
-    icon: Apple,
-    description: "Get personalized food recommendations based on your goals.",
-  },
 ];
 
 const otherFeatureItems: NavItem[] = [

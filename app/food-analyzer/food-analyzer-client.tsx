@@ -10,7 +10,6 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-// Tambahkan Camera di sini
 import {
   UploadCloud,
   Image as ImageIcon,
@@ -28,7 +27,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { analyzeFood } from "@/lib/gemini";
+import axios from "axios";
 
 interface NutritionInfo {
   foodName: string;
@@ -116,31 +115,48 @@ export default function FoodAnalyzerClient() {
     setAnalysisResult(null);
 
     try {
-      // Convert image to base64
-      const reader = new FileReader();
-      const base64Promise = new Promise((resolve) => {
-        reader.onloadend = () => resolve(reader.result);
-        reader.readAsDataURL(imageFile);
+      const token = localStorage.getItem("tokenGYMBRO");
+      if (!token) {
+        toast({
+          variant: "destructive",
+          title: "Authentication Failed",
+          description: "Please login first to analyze your food.",
+        });
+        setError("Authentication required. Please login first.");
+        setIsLoading(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("image", imageFile);
+
+      const response = await axios.post("/api/food", formData, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
       });
 
-      const base64 = (await base64Promise) as string;
+      console.log("API Response:", response.data);
 
-      // Call Gemini API
-      const result = await analyzeFood(base64);
+      if (!response.data.success) {
+        throw new Error(response.data.message || "Failed to analyze food image");
+      }
+
+      const foodData = response.data.data.data;
+      const imageUrl = response.data.data.imageUrl;
 
       setAnalysisResult({
-        foodName: result.foodName,
-        calories: result.calories,
-        protein: result.protein,
-        fat: result.fat,
-        carbs: result.carbs,
-        servingSize: result.servingSize,
-        confidence: result.confidence,
+        foodName: foodData.name || "Unknown Food",
+        calories: `${foodData.calories || 0} kcal`,
+        protein: `${foodData.protein || 0}g`,
+        fat: `${foodData.fat || 0}g`,
+        carbs: `${foodData.carbo || 0}g`,
       });
 
       toast({
         title: "Analysis Complete!",
-        description: `Identified: ${result.foodName}`,
+        description: `Identified: ${foodData.name || "Food Item"}`,
         action: <CheckCircle className="h-5 w-5 text-green-500" />,
       });
     } catch (error) {
@@ -357,25 +373,16 @@ export default function FoodAnalyzerClient() {
                           </p>
                         </div>
                       </div>
-                      {analysisResult.confidence && (
-                        <p className="text-center text-xs text-gray-500 pt-2">
-                          Confidence:{" "}
-                          {Math.round(analysisResult.confidence * 100)}%
-                          (Simulated)
-                        </p>
-                      )}
                       <Separator className="bg-zinc-700/60 my-4" />
                       <div className="text-xs text-gray-500 flex items-start gap-2 p-3 bg-black/20 rounded-md border border-zinc-700/40">
-                        {/* InfoIcon diganti menjadi AlertCircle untuk konsistensi jika InfoIcon tidak diimpor */}
                         <AlertCircle
                           size={28}
                           className="text-gray-500 flex-shrink-0 mt-0.5"
                         />
                         <span>
-                          These nutritional values are estimates based on AI
-                          analysis and standard databases. Actual values may
-                          vary. For precise dietary planning, consult a
-                          nutritionist. This is a simulated result.
+                          These nutritional values are estimates based on our food database.
+                          Actual values may vary depending on preparation methods and ingredients.
+                          For precise dietary planning, consult a nutritionist.
                         </span>
                       </div>
                     </CardContent>

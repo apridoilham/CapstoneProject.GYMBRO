@@ -362,7 +362,7 @@ const initialUserProfile: UserProfileData = {
   id: "",
   name: "",
   username: "",
-  avatarUrl: "/path/to/default/avatar.png",
+  avatarUrl: "/images/default-avatar.png",
   email: "",
   dateOfBirth: "",
   gender: undefined,
@@ -408,11 +408,15 @@ export default function ProfileClient() {
 
       let email = "";
       let currentUsername = "";
+      let savedAvatarUrl = "";
+      
       if (userProfile) {
         try {
           const parsedProfile = JSON.parse(userProfile);
           email = parsedProfile.email || "";
           currentUsername = parsedProfile.username || "";
+          savedAvatarUrl = parsedProfile.avatarUrl || "";
+          console.log("Avatar URL from localStorage:", savedAvatarUrl);
         } catch (e) {
           console.error("Failed to parse userProfile:", e);
         }
@@ -424,30 +428,47 @@ export default function ProfileClient() {
         return;
       }
 
+      if (savedAvatarUrl && savedAvatarUrl.includes("cloudinary.com")) {
+        setAvatarPreview(savedAvatarUrl);
+      }
+
+      console.log("Fetching user data for email:", email);
       const response = await axios.get(`/api/user/${email}`, {
         headers: {
           Authorization: `Bearer ${token}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
         },
+        params: { t: Date.now() }
       });
 
+      console.log("Full API response:", response);
       const result = response.data;
       if (!result.success) {
         throw new Error(result.message || "Failed to fetch user data");
       }
       
-      const newTimestamp = Date.now();
-      setAvatarTimestamp(newTimestamp);
-
-      const imageUrlWithTimestamp = result.data.imageUrl 
-        ? `${result.data.imageUrl}?t=${newTimestamp}` 
-        : "/path/to/default/avatar.png";
+      console.log("Full user data from API:", result.data);
+      
+      let finalAvatarUrl;
+      
+      if (result.data.imageUrl && result.data.imageUrl.includes("cloudinary.com")) {
+        finalAvatarUrl = result.data.imageUrl;
+        console.log("Using image URL from API:", finalAvatarUrl);
+      } else if (savedAvatarUrl && savedAvatarUrl.includes("cloudinary.com")) {
+        finalAvatarUrl = savedAvatarUrl;
+        console.log("Using image URL from localStorage:", finalAvatarUrl);
+      } else {
+        finalAvatarUrl = "/images/default-avatar.png";
+        console.log("Using default image URL:", finalAvatarUrl);
+      }
 
       const updatedUserProfile: UserProfileData = {
         id: result.data._id || "unknown",
         name: result.data.fullName || "Unknown User",
         username: currentUsername || result.data.email?.split("@")[0] || "",
         email: email,
-        avatarUrl: imageUrlWithTimestamp,
+        avatarUrl: finalAvatarUrl,
         dateOfBirth: result.data.date
           ? new Date(result.data.date).toISOString().split("T")[0]
           : "",
@@ -480,9 +501,10 @@ export default function ProfileClient() {
         },
       };
 
+      console.log("Updated profile with avatar URL:", finalAvatarUrl);
       setUserData(updatedUserProfile);
       setUser(updatedUserProfile);
-      setAvatarPreview(imageUrlWithTimestamp);
+      setAvatarPreview(finalAvatarUrl);
 
       localStorage.setItem(
         "gymBroUserProfile",
@@ -490,6 +512,24 @@ export default function ProfileClient() {
       );
     } catch (error) {
       console.error("Error fetching user data:", error);
+      
+      const savedProfile = localStorage.getItem("gymBroUserProfile");
+      if (savedProfile) {
+        try {
+          const parsedProfile = JSON.parse(savedProfile);
+          if (parsedProfile.avatarUrl && parsedProfile.avatarUrl.includes("cloudinary.com")) {
+            console.log("Using backup data from localStorage");
+            setUser(parsedProfile);
+            setUserData(parsedProfile);
+            setAvatarPreview(parsedProfile.avatarUrl);
+            setIsLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.error("Failed to parse backup profile", e);
+        }
+      }
+      
       if (axios.isAxiosError(error)) {
         toast({
           variant: "destructive",
@@ -526,8 +566,12 @@ export default function ProfileClient() {
       }
 
       let parsedProfile;
+      let savedAvatarUrl = "";
+      
       try {
         parsedProfile = JSON.parse(userProfile);
+        savedAvatarUrl = parsedProfile.avatarUrl || "";
+        console.log("Current avatar URL before update:", savedAvatarUrl);
       } catch (e) {
         console.error("Failed to parse userProfile:", e);
         router.push("/login");
@@ -564,9 +608,19 @@ export default function ProfileClient() {
       
       formData.append("FastingGlucose", data.bloodGlucose || "0");
       
+      let hasNewImage = false;
       if (data.avatarFile) {
         formData.append("image", data.avatarFile);
+        hasNewImage = true;
+        console.log("New image being uploaded");
       }
+
+      console.log("Sending update request with data:", {
+        email,
+        fullName: data.name,
+        date: data.dateOfBirth,
+        hasNewImage
+      });
 
       const response = await axios.put("/api/user", formData, {
         headers: {
@@ -575,17 +629,25 @@ export default function ProfileClient() {
         },
       });
 
+      console.log("Update API response:", response);
       const result = response.data;
       if (!result.success) {
         throw new Error(result.message || "Failed to update user data");
       }
 
-      const newTimestamp = Date.now();
-      setAvatarTimestamp(newTimestamp);
+      console.log("Received image URL from server:", result.data.imageUrl);
+
+      let finalAvatarUrl;
       
-      const imageUrlWithTimestamp = result.data.imageUrl 
-        ? `${result.data.imageUrl}?t=${newTimestamp}` 
-        : result.data.imageUrl;
+      if (result.data.imageUrl && result.data.imageUrl.includes("cloudinary.com")) {
+        finalAvatarUrl = result.data.imageUrl;
+      } else if (!hasNewImage && savedAvatarUrl && savedAvatarUrl.includes("cloudinary.com")) {
+        finalAvatarUrl = savedAvatarUrl;
+      } else {
+        finalAvatarUrl = "/images/default-avatar.png";
+      }
+      
+      console.log("Final avatar URL after update:", finalAvatarUrl);
 
       const updatedProfile = {
         ...parsedProfile,
@@ -596,8 +658,8 @@ export default function ProfileClient() {
         gender: data.gender,
         heightCm: data.heightCm,
         currentWeightKg: data.currentWeightKg,
-        imageUrl: result.data.imageUrl,
-        avatarUrl: imageUrlWithTimestamp,
+        imageUrl: finalAvatarUrl,
+        avatarUrl: finalAvatarUrl,
         healthInfo: {
           bloodPressure: data.bloodPressure,
           bloodGlucose: data.bloodGlucose,
@@ -611,11 +673,12 @@ export default function ProfileClient() {
         },
       };
 
+      console.log("Saving updated profile to localStorage:", updatedProfile);
       localStorage.setItem("gymBroUserProfile", JSON.stringify(updatedProfile));
       
       setUser(updatedProfile);
       setUserData(updatedProfile);
-      setAvatarPreview(imageUrlWithTimestamp);
+      setAvatarPreview(finalAvatarUrl);
 
       toast({
         title: "Profile Updated",
@@ -810,7 +873,10 @@ export default function ProfileClient() {
               className="relative flex-shrink-0"
             >
               <Avatar className="h-36 w-36 md:h-44 md:w-44 border-4 border-primary shadow-xl">
-                <AvatarImage src={`${user.avatarUrl || "/path/to/default/avatar.png"}${user.avatarUrl?.includes("?") ? "&" : "?"}t=${avatarTimestamp}`} alt={user.name} />
+                <AvatarImage 
+                  src={user.avatarUrl || "/images/default-avatar.png"} 
+                  alt={user.name} 
+                />
                 <AvatarFallback className="text-5xl bg-zinc-700 text-primary font-bold">
                   {initials}
                 </AvatarFallback>
@@ -854,7 +920,7 @@ export default function ProfileClient() {
                       <div className="flex items-center gap-4">
                         <Avatar className="h-24 w-24 border-2 border-zinc-700">
                           <AvatarImage
-                            src={`${avatarPreview || user.avatarUrl || "/path/to/default/avatar.png"}${(avatarPreview || user.avatarUrl)?.includes("?") ? "&" : "?"}t=${avatarTimestamp}`}
+                            src={avatarPreview || user.avatarUrl || "/images/default-avatar.png"}
                             alt="Avatar preview"
                           />
                           <AvatarFallback className="bg-zinc-800 text-primary text-2xl">
