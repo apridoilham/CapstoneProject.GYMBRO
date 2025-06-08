@@ -33,6 +33,7 @@ export async function GET(
 			weight: user.weight ?? null,
 			BloodPressure: user.BloodPressure ?? null,
 			FastingGlucose: user.FastingGlucose ?? null,
+			imageUrl: user.imageUrl ?? null,
 		};
 		return NextResponse.json({ data: finalData, success: true });
 	} catch (error) {

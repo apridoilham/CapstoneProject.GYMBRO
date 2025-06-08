@@ -51,7 +51,7 @@ export default function LoginClient() {
     try {
       // Panggil API login menggunakan axios
       const loginResponse = await axios.post(
-        "http://localhost:3000/api/login",
+        "/api/login", // Ubah dari URL absolute ke relatif
         {
           email: data.email,
           password: data.password,
@@ -80,26 +80,54 @@ export default function LoginClient() {
 
       // Ambil data lengkap pengguna dari endpoint /user/:email menggunakan axios
       const userResponse = await axios.get(
-        `http://localhost:3000/api/user/${data.email}`,
+        `/api/user/${data.email}`,  // Ubah dari URL absolute ke relatif
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
           },
+          params: { t: Date.now() } // Mencegah cache
         }
       );
 
+      console.log("User data response:", userResponse.data);
       const userResult = userResponse.data;
 
       if (!userResult.success) {
         throw new Error(userResult.message || "Failed to fetch user data");
       }
 
+      // Verifikasi URL gambar dengan lebih ketat dan tambahkan logging
+      let imageUrl = "/images/default-avatar.png"; // Default fallback
+      console.log("Raw image URL from API:", userResult.data.imageUrl);
+      
+      if (userResult.data.imageUrl && userResult.data.imageUrl.includes("cloudinary.com")) {
+        // Pastikan URL cloudinary disimpan dengan benar dan tidak di-cache
+        imageUrl = userResult.data.imageUrl;
+        console.log("Using Cloudinary image URL:", imageUrl);
+      } else {
+        console.log("Using default image URL:", imageUrl);
+      }
+
+      // Format tanggal dengan benar jika ada
+      let formattedDate = "";
+      if (userResult.data.date) {
+        try {
+          formattedDate = new Date(userResult.data.date).toISOString().split('T')[0];
+          console.log("Formatted date:", formattedDate);
+        } catch (e) {
+          console.error("Error formatting date:", e);
+        }
+      }
+
       // Simpan data lengkap ke localStorage
       const userProfile = {
+        id: userResult.data._id || "",
         email: userResult.data.email,
         username: userResult.data.email.split("@")[0],
         name: userResult.data.fullName || "Unknown User",
-        dateOfBirth: userResult.data.date || "",
+        dateOfBirth: formattedDate,
         age: userResult.data.age || undefined,
         gender:
           userResult.data.gender === "Laki-laki"
@@ -111,6 +139,9 @@ export default function LoginClient() {
             : "prefer_not_to_say",
         heightCm: userResult.data.height || undefined,
         currentWeightKg: userResult.data.weight || undefined,
+        avatarUrl: imageUrl,  // Simpan URL gambar yang sama di kedua properti
+        imageUrl: imageUrl,   // untuk mendukung kompatibilitas dengan kode yang mungkin menggunakan properti yang berbeda
+        bio: "",
         healthInfo: {
           bloodPressure: userResult.data.BloodPressure
             ? `${userResult.data.BloodPressure.systolic}/${userResult.data.BloodPressure.diastolic}`
@@ -126,9 +157,9 @@ export default function LoginClient() {
           website: "",
           linkedin: "",
         },
-        avatarUrl: "/path/to/default/avatar.png",
       };
 
+      console.log("Saving user profile to localStorage:", userProfile);
       localStorage.setItem("gymBroUserProfile", JSON.stringify(userProfile));
 
       // Dispatch custom event untuk update Header
@@ -143,134 +174,141 @@ export default function LoginClient() {
       setTimeout(() => {
         router.push("/");
       }, 100);
-    } catch (error: any) {
-      // Axios error handling
-      let errorMessage = "Invalid credentials. Try again, Legend!";
-
-      if (axios.isAxiosError(error)) {
-        if (error.response?.data?.message) {
-          errorMessage = error.response.data.message;
-        } else if (error.message) {
-          errorMessage = error.message;
-        }
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
+    } catch (error) {
+      console.error("Error during login:", error);
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: errorMessage,
+        description:
+          error instanceof Error
+            ? error.message
+            : "Check your email and password, Bro.",
       });
     }
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center px-4 py-12 pt-28 md:pt-32">
-      <div className="w-full max-w-md space-y-8 bg-zinc-900 p-8 md:p-10 rounded-xl shadow-2xl">
-        <div className="text-center">
-          <LogIn size={40} className="mx-auto mb-4 text-primary" />
-          <h2 className="text-3xl font-bold text-white">Welcome Back, Bro!</h2>
-          <p className="text-gray-400 mt-2">
-            Ready to crush those goals? Sign in.
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900 text-white pt-28 md:pt-36 pb-16 md:pb-24">
+      <div className="container mx-auto px-4 md:px-8">
+        <div className="max-w-md mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-extrabold text-white tracking-tighter">
+              Welcome Back <span className="text-primary">BRO</span>!
+            </h1>
+            <p className="text-gray-400 mt-2">
+              Let's get you back to your gains journey
+            </p>
+          </div>
+
+          <div className="bg-zinc-900/50 px-6 py-8 rounded-lg border border-zinc-800/60 backdrop-blur shadow-xl">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-300 block">
+                  Email
+                </label>
+                <Input
+                  id="email"
+                  placeholder="your.email@domain.com"
+                  className="bg-zinc-800/90 border-zinc-700 text-white placeholder:text-zinc-500"
+                  {...register("email")}
+                />
+                {errors.email && (
+                  <p className="text-red-500 text-xs">
+                    {errors.email.message?.toString()}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-300 block">
+                  Password
+                </label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Your password"
+                    className="bg-zinc-800/90 border-zinc-700 text-white placeholder:text-zinc-500 pr-10"
+                    {...register("password")}
+                  />
+                  <button
+                    type="button"
+                    onClick={togglePasswordVisibility}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white focus:outline-none"
+                  >
+                    {showPassword ? (
+                      <EyeOff size={18} />
+                    ) : (
+                      <Eye size={18} />
+                    )}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="text-red-500 text-xs">
+                    {errors.password.message?.toString()}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="rememberMe"
+                    className="rounded text-primary focus:ring-primary bg-zinc-800 border-zinc-600"
+                    {...register("rememberMe")}
+                  />
+                  <label
+                    htmlFor="rememberMe"
+                    className="text-sm text-gray-400 select-none"
+                  >
+                    Remember me
+                  </label>
+                </div>
+                <Link
+                  href="/forgot-password"
+                  className="text-sm text-primary hover:text-primary/80 transition"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-primary hover:bg-primary/80 text-white font-bold py-2.5 rounded-md flex items-center justify-center"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="animate-spin h-5 w-5 mr-2" />
+                    Logging In...
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="h-5 w-5 mr-2" />
+                    Login
+                  </>
+                )}
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <p className="text-gray-400 text-sm">
+                Don't have an account?{" "}
+                <Link
+                  href="/register"
+                  className="text-primary hover:text-primary/80 transition font-medium"
+                >
+                  Sign up now
+                </Link>
+              </p>
+            </div>
+          </div>
         </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-300 mb-1"
-            >
-              Email Address
-            </label>
-            <Input
-              id="email"
-              type="email"
-              className="bg-zinc-800 border-zinc-700 text-white placeholder-gray-500"
-              placeholder="you@example.com"
-              {...register("email")}
-            />
-            {errors.email && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.email.message}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-300 mb-1"
-            >
-              Password
-            </label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                className="bg-zinc-800 border-zinc-700 text-white pr-10 placeholder-gray-500"
-                placeholder="Your Strong Password"
-                {...register("password")}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-            {errors.password && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.password.message}
-              </p>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="rememberMe"
-                type="checkbox"
-                className="h-4 w-4 text-primary bg-zinc-700 border-zinc-600 rounded focus:ring-primary focus:ring-offset-zinc-900 cursor-pointer"
-                {...register("rememberMe")}
-              />
-              <label
-                htmlFor="rememberMe"
-                className="ml-2 block text-sm text-gray-300 cursor-pointer"
-              >
-                Remember me
-              </label>
-            </div>
-            <Link
-              href="/forgot-password"
-              className="text-sm text-primary/80 hover:text-primary hover:underline"
-            >
-              Forgot password?
-            </Link>
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full font-semibold py-3"
-            disabled={isSubmitting}
-          >
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isSubmitting ? "Signing In..." : "Sign In & Get Gains"}
-          </Button>
-
-          <p className="text-center text-sm text-gray-400">
-            Not a Bro yet?{" "}
-            <Link
-              href="/register"
-              className="font-medium text-primary hover:underline"
-            >
-              Join the Movement
-            </Link>
-          </p>
-        </form>
       </div>
     </div>
   );

@@ -74,6 +74,7 @@ interface UserProfileData {
   name: string;
   username: string;
   avatarUrl: string;
+  imageUrl?: string;
   email?: string;
   dateOfBirth?: string;
   age?: number;
@@ -409,14 +410,16 @@ export default function ProfileClient() {
       let email = "";
       let currentUsername = "";
       let savedAvatarUrl = "";
+      let savedDateOfBirth = "";
       
       if (userProfile) {
         try {
           const parsedProfile = JSON.parse(userProfile);
           email = parsedProfile.email || "";
           currentUsername = parsedProfile.username || "";
-          savedAvatarUrl = parsedProfile.avatarUrl || "";
-          console.log("Avatar URL from localStorage:", savedAvatarUrl);
+          savedAvatarUrl = parsedProfile.avatarUrl || parsedProfile.imageUrl || "";
+          savedDateOfBirth = parsedProfile.dateOfBirth || "";
+          console.log("Saved data from localStorage - Avatar:", savedAvatarUrl, "Date:", savedDateOfBirth);
         } catch (e) {
           console.error("Failed to parse userProfile:", e);
         }
@@ -449,6 +452,7 @@ export default function ProfileClient() {
       }
       
       console.log("Full user data from API:", result.data);
+      console.log("Explicitly checking imageUrl from API:", result.data.imageUrl);
       
       let finalAvatarUrl;
       
@@ -463,16 +467,28 @@ export default function ProfileClient() {
         console.log("Using default image URL:", finalAvatarUrl);
       }
 
+      let formattedDate = "";
+      if (result.data.date) {
+        try {
+          formattedDate = new Date(result.data.date).toISOString().split("T")[0];
+          console.log("Formatted date from API:", formattedDate);
+        } catch (e) {
+          console.error("Error formatting date from API:", e);
+        }
+      }
+      
+      const finalDateOfBirth = formattedDate || savedDateOfBirth || "";
+      console.log("Final date of birth:", finalDateOfBirth);
+
       const updatedUserProfile: UserProfileData = {
         id: result.data._id || "unknown",
         name: result.data.fullName || "Unknown User",
         username: currentUsername || result.data.email?.split("@")[0] || "",
         email: email,
         avatarUrl: finalAvatarUrl,
-        dateOfBirth: result.data.date
-          ? new Date(result.data.date).toISOString().split("T")[0]
-          : "",
-        age: result.data.age || calculateAge(result.data.date) || undefined,
+        imageUrl: finalAvatarUrl,
+        dateOfBirth: finalDateOfBirth,
+        age: result.data.age || calculateAge(finalDateOfBirth) || undefined,
         gender:
           result.data.gender === "Laki-laki"
             ? "male"
@@ -552,6 +568,21 @@ export default function ProfileClient() {
 
   useEffect(() => {
     fetchUserData();
+    
+    const checkProfileImage = () => {
+      const profile = localStorage.getItem("gymBroUserProfile");
+      if (profile) {
+        const parsed = JSON.parse(profile);
+        console.log("Current profile image in localStorage:", parsed.avatarUrl || parsed.imageUrl);
+      }
+    };
+    
+    checkProfileImage();
+    window.addEventListener('focus', checkProfileImage);
+    
+    return () => {
+      window.removeEventListener('focus', checkProfileImage);
+    };
   }, []);
 
   const updateUserData = async (data: ProfileFormValues) => {
@@ -567,11 +598,13 @@ export default function ProfileClient() {
 
       let parsedProfile;
       let savedAvatarUrl = "";
+      let savedDateOfBirth = "";
       
       try {
         parsedProfile = JSON.parse(userProfile);
-        savedAvatarUrl = parsedProfile.avatarUrl || "";
-        console.log("Current avatar URL before update:", savedAvatarUrl);
+        savedAvatarUrl = parsedProfile.avatarUrl || parsedProfile.imageUrl || "";
+        savedDateOfBirth = parsedProfile.dateOfBirth || "";
+        console.log("Current data before update - Avatar:", savedAvatarUrl, "Date:", savedDateOfBirth);
       } catch (e) {
         console.error("Failed to parse userProfile:", e);
         router.push("/login");
@@ -587,8 +620,13 @@ export default function ProfileClient() {
       
       formData.append("email", email);
       formData.append("fullName", data.name);
-      formData.append("date", data.dateOfBirth || "");
-      formData.append("age", calculateAge(data.dateOfBirth)?.toString() || "0");
+      
+      const dateString = data.dateOfBirth || "";
+      formData.append("date", dateString);
+      
+      const calculatedAge = calculateAge(dateString);
+      formData.append("age", calculatedAge?.toString() || "0");
+      console.log("Sending date:", dateString, "Age:", calculatedAge);
       
       let genderValue = "Tidak Disebutkan";
       if (data.gender === "male") genderValue = "Laki-laki";
@@ -641,20 +679,21 @@ export default function ProfileClient() {
       
       if (result.data.imageUrl && result.data.imageUrl.includes("cloudinary.com")) {
         finalAvatarUrl = result.data.imageUrl;
+        console.log("Using new image URL from API:", finalAvatarUrl);
       } else if (!hasNewImage && savedAvatarUrl && savedAvatarUrl.includes("cloudinary.com")) {
         finalAvatarUrl = savedAvatarUrl;
+        console.log("Keeping existing image URL:", finalAvatarUrl);
       } else {
         finalAvatarUrl = "/images/default-avatar.png";
+        console.log("Using default image URL");
       }
       
-      console.log("Final avatar URL after update:", finalAvatarUrl);
-
       const updatedProfile = {
         ...parsedProfile,
         fullName: data.name,
         name: data.name,
-        dateOfBirth: data.dateOfBirth,
-        age: calculateAge(data.dateOfBirth),
+        dateOfBirth: data.dateOfBirth || savedDateOfBirth,
+        age: calculateAge(data.dateOfBirth || savedDateOfBirth),
         gender: data.gender,
         heightCm: data.heightCm,
         currentWeightKg: data.currentWeightKg,
@@ -675,6 +714,9 @@ export default function ProfileClient() {
 
       console.log("Saving updated profile to localStorage:", updatedProfile);
       localStorage.setItem("gymBroUserProfile", JSON.stringify(updatedProfile));
+      
+      // Trigger custom event untuk memastikan header mendeteksi perubahan
+      window.dispatchEvent(new CustomEvent("userProfileUpdated"));
       
       setUser(updatedProfile);
       setUserData(updatedProfile);
@@ -876,6 +918,10 @@ export default function ProfileClient() {
                 <AvatarImage 
                   src={user.avatarUrl || "/images/default-avatar.png"} 
                   alt={user.name} 
+                  onError={(e) => {
+                    console.log("Avatar image failed to load, using fallback");
+                    e.currentTarget.src = "/images/default-avatar.png";
+                  }}
                 />
                 <AvatarFallback className="text-5xl bg-zinc-700 text-primary font-bold">
                   {initials}
@@ -922,6 +968,10 @@ export default function ProfileClient() {
                           <AvatarImage
                             src={avatarPreview || user.avatarUrl || "/images/default-avatar.png"}
                             alt="Avatar preview"
+                            onError={(e) => {
+                              console.log("Avatar preview failed to load, using fallback");
+                              e.currentTarget.src = "/images/default-avatar.png";
+                            }}
                           />
                           <AvatarFallback className="bg-zinc-800 text-primary text-2xl">
                             {initials}

@@ -33,6 +33,7 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface NavItem {
   href: string;
@@ -95,6 +96,7 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string>("/images/default-avatar.png");
   const [isLoading, setIsLoading] = useState(true);
   const pathname = usePathname();
   const headerRef = useRef<HTMLElement>(null);
@@ -131,8 +133,24 @@ const Header = () => {
               typeof profile.name === "string" &&
               profile.name.trim() !== ""
             ) {
+              // Pastikan tampilan profil menyertakan tanggal dan gambar
+              // Jika ada update ke localStorage, pastikan data penting tidak hilang
+              const avatarUrl = profile.avatarUrl || profile.imageUrl;
+              if (avatarUrl && !profile.avatarUrl) {
+                profile.avatarUrl = avatarUrl;
+                localStorage.setItem("gymBroUserProfile", JSON.stringify(profile));
+              }
+
               setIsLoggedIn(true);
               setDisplayName(profile.name.split(" ")[0]);
+              
+              // Atur avatar URL
+              if (avatarUrl && avatarUrl.includes("cloudinary.com")) {
+                console.log("Setting avatar URL in header:", avatarUrl);
+                setAvatarUrl(avatarUrl);
+              } else {
+                setAvatarUrl("/images/default-avatar.png");
+              }
             } else {
               // Clear invalid data
               localStorage.removeItem("isLoggedInGYMBRO");
@@ -189,11 +207,13 @@ const Header = () => {
     window.addEventListener("userLoggedIn", handleAuthEvent);
     window.addEventListener("userLoggedOut", handleAuthEvent);
     window.addEventListener("userRegistered", handleAuthEvent);
+    window.addEventListener("userProfileUpdated", handleAuthEvent);
 
     return () => {
       window.removeEventListener("userLoggedIn", handleAuthEvent);
       window.removeEventListener("userLoggedOut", handleAuthEvent);
       window.removeEventListener("userRegistered", handleAuthEvent);
+      window.removeEventListener("userProfileUpdated", handleAuthEvent);
     };
   }, [debouncedCheckLoginStatus]);
 
@@ -629,7 +649,19 @@ const Header = () => {
                 onClick={closeMenuOnly}
                 aria-label={`Profile for ${displayName}`}
               >
-                <UserCircle size={24} aria-hidden="true" />
+                <Avatar className="h-8 w-8 rounded-full border border-indigo-500/30">
+                  <AvatarImage
+                    src={avatarUrl}
+                    alt={displayName}
+                    onError={(e) => {
+                      console.log("Avatar failed to load in header");
+                      e.currentTarget.src = "/images/default-avatar.png";
+                    }}
+                  />
+                  <AvatarFallback className="bg-zinc-800 text-primary text-sm">
+                    {displayName?.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
               </Link>
             )}
             <Button
