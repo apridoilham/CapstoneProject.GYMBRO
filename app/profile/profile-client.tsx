@@ -423,36 +423,27 @@ export default function ProfileClient() {
         return;
       }
 
-      const response = await axios.get(
-        `http://localhost:3000/api/user/${email}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axios.get(`/api/user/${email}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const result = response.data;
       if (!result.success) {
         throw new Error(result.message || "Failed to fetch user data");
       }
 
-      // Use the server's username if available, otherwise keep the current username
-      const username =
-        result.data.username ||
-        currentUsername ||
-        result.data.email.split("@")[0];
-
       const updatedUserProfile: UserProfileData = {
         id: result.data._id || "unknown",
         name: result.data.fullName || "Unknown User",
-        username: username,
+        username: currentUsername || result.data.email?.split("@")[0] || "",
         email: email,
-        avatarUrl: result.data.avatarUrl || "/path/to/default/avatar.png",
+        avatarUrl: result.data.imageUrl || "/path/to/default/avatar.png",
         dateOfBirth: result.data.date
           ? new Date(result.data.date).toISOString().split("T")[0]
           : "",
-        age: calculateAge(result.data.date) || undefined,
+        age: result.data.age || calculateAge(result.data.date) || undefined,
         gender:
           result.data.gender === "Laki-laki"
             ? "male"
@@ -463,7 +454,7 @@ export default function ProfileClient() {
             : "prefer_not_to_say",
         heightCm: result.data.height || undefined,
         currentWeightKg: result.data.weight || undefined,
-        bio: result.data.bio || "",
+        bio: "",
         healthInfo: {
           bloodPressure: result.data.BloodPressure
             ? `${result.data.BloodPressure.systolic}/${result.data.BloodPressure.diastolic}`
@@ -471,20 +462,19 @@ export default function ProfileClient() {
           bloodGlucose: result.data.FastingGlucose
             ? result.data.FastingGlucose.toString()
             : "",
-          notes: result.data.healthNotes || "",
+          notes: "",
         },
         socialMedia: {
-          instagram: result.data.socialMedia?.instagram || "",
-          twitter: result.data.socialMedia?.twitter || "",
-          linkedin: result.data.socialMedia?.linkedin || "",
-          website: result.data.socialMedia?.website || "",
+          instagram: "",
+          twitter: "",
+          linkedin: "",
+          website: "",
         },
       };
 
       setUserData(updatedUserProfile);
       setUser(updatedUserProfile);
 
-      // Update localStorage with fresh data
       localStorage.setItem(
         "gymBroUserProfile",
         JSON.stringify(updatedUserProfile)
@@ -540,101 +530,58 @@ export default function ProfileClient() {
         throw new Error("No email found in userProfile");
       }
 
-      // Handle avatar upload if there's a new file
-      let avatarUrl = user?.avatarUrl;
+      const formData = new FormData();
+      
+      formData.append("email", email);
+      formData.append("fullName", data.name);
+      formData.append("date", data.dateOfBirth || "");
+      formData.append("age", calculateAge(data.dateOfBirth)?.toString() || "0");
+      
+      let genderValue = "Tidak Disebutkan";
+      if (data.gender === "male") genderValue = "Laki-laki";
+      else if (data.gender === "female") genderValue = "Perempuan";
+      else if (data.gender === "other") genderValue = "Lainnya";
+      formData.append("gender", genderValue);
+      
+      formData.append("height", data.heightCm?.toString() || "0");
+      formData.append("weight", data.currentWeightKg?.toString() || "0");
+      
+      const bloodPressureParts = data.bloodPressure?.split("/") || [];
+      const bloodPressureData = {
+        systolic: parseInt(bloodPressureParts[0] || "0"),
+        diastolic: parseInt(bloodPressureParts[1] || "0")
+      };
+      formData.append("BloodPressure", JSON.stringify(bloodPressureData));
+      
+      formData.append("FastingGlucose", data.bloodGlucose || "0");
+      
       if (data.avatarFile) {
-        const formData = new FormData();
-        formData.append("file", data.avatarFile);
-
-        try {
-          const uploadResponse = await axios.post(
-            "http://localhost:3000/api/upload",
-            formData,
-            {
-              headers: {
-                "Content-Type": "multipart/form-data",
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-
-          if (uploadResponse.data.success) {
-            avatarUrl = uploadResponse.data.url;
-          }
-        } catch (error) {
-          console.error("Error uploading avatar:", error);
-          toast({
-            variant: "destructive",
-            title: "Avatar Upload Failed",
-            description: "Failed to upload profile picture. Please try again.",
-          });
-        }
+        formData.append("image", data.avatarFile);
       }
 
-      const bloodPressureParts = data.bloodPressure?.split("/") || [];
-      const updateData = {
-        email,
-        date: data.dateOfBirth || null,
-        fullName: data.name,
-        username: data.username,
-        age: calculateAge(data.dateOfBirth),
-        gender:
-          data.gender === "male"
-            ? "Laki-laki"
-            : data.gender === "female"
-            ? "Perempuan"
-            : data.gender === "other"
-            ? "Lainnya"
-            : "Tidak Disebutkan",
-        height: data.heightCm || null,
-        weight: data.currentWeightKg || null,
-        BloodPressure: data.bloodPressure
-          ? {
-              systolic: parseInt(bloodPressureParts[0] || "0"),
-              diastolic: parseInt(bloodPressureParts[1] || "0"),
-            }
-          : null,
-        FastingGlucose: data.bloodGlucose
-          ? parseFloat(data.bloodGlucose)
-          : null,
-        bio: data.bio || null,
-        healthNotes: data.healthNotes || null,
-        socialMedia: {
-          instagram: data.instagram || null,
-          twitter: data.twitter || null,
-          linkedin: data.linkedin || null,
-          website: data.website || null,
+      const response = await axios.put("/api/user", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
         },
-        avatarUrl: avatarUrl,
-      };
-
-      const response = await axios.put(
-        "http://localhost:3000/api/user",
-        updateData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      });
 
       const result = response.data;
       if (!result.success) {
         throw new Error(result.message || "Failed to update user data");
       }
 
-      // Update local storage with new data immediately
       const updatedProfile = {
         ...parsedProfile,
         fullName: data.name,
-        username: data.username, // Make sure username is updated
         name: data.name,
         dateOfBirth: data.dateOfBirth,
+        age: calculateAge(data.dateOfBirth),
         gender: data.gender,
         heightCm: data.heightCm,
         currentWeightKg: data.currentWeightKg,
-        bio: data.bio,
-        avatarUrl: avatarUrl,
+        imageUrl: result.data.imageUrl,
+        avatarUrl: result.data.imageUrl,
         healthInfo: {
           bloodPressure: data.bloodPressure,
           bloodGlucose: data.bloodGlucose,
@@ -648,14 +595,11 @@ export default function ProfileClient() {
         },
       };
 
-      // Update localStorage
       localStorage.setItem("gymBroUserProfile", JSON.stringify(updatedProfile));
-
-      // Update state
+      
       setUser(updatedProfile);
       setUserData(updatedProfile);
 
-      // Fetch fresh data to ensure everything is in sync
       await fetchUserData();
 
       toast({
@@ -708,7 +652,6 @@ export default function ProfileClient() {
     if (storedProfileString) {
       try {
         const parsedProfile = JSON.parse(storedProfileString);
-        // Ensure we're using the correct username from the profile
         loadedProfile = {
           ...initialUserProfile,
           ...parsedProfile,
