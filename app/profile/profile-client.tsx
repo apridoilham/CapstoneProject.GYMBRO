@@ -391,6 +391,7 @@ export default function ProfileClient() {
   const [user, setUser] = useState<UserProfileData | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [avatarTimestamp, setAvatarTimestamp] = useState<number>(Date.now());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchUserData = async () => {
@@ -433,13 +434,20 @@ export default function ProfileClient() {
       if (!result.success) {
         throw new Error(result.message || "Failed to fetch user data");
       }
+      
+      const newTimestamp = Date.now();
+      setAvatarTimestamp(newTimestamp);
+
+      const imageUrlWithTimestamp = result.data.imageUrl 
+        ? `${result.data.imageUrl}?t=${newTimestamp}` 
+        : "/path/to/default/avatar.png";
 
       const updatedUserProfile: UserProfileData = {
         id: result.data._id || "unknown",
         name: result.data.fullName || "Unknown User",
         username: currentUsername || result.data.email?.split("@")[0] || "",
         email: email,
-        avatarUrl: result.data.imageUrl || "/path/to/default/avatar.png",
+        avatarUrl: imageUrlWithTimestamp,
         dateOfBirth: result.data.date
           ? new Date(result.data.date).toISOString().split("T")[0]
           : "",
@@ -474,6 +482,7 @@ export default function ProfileClient() {
 
       setUserData(updatedUserProfile);
       setUser(updatedUserProfile);
+      setAvatarPreview(imageUrlWithTimestamp);
 
       localStorage.setItem(
         "gymBroUserProfile",
@@ -571,6 +580,13 @@ export default function ProfileClient() {
         throw new Error(result.message || "Failed to update user data");
       }
 
+      const newTimestamp = Date.now();
+      setAvatarTimestamp(newTimestamp);
+      
+      const imageUrlWithTimestamp = result.data.imageUrl 
+        ? `${result.data.imageUrl}?t=${newTimestamp}` 
+        : result.data.imageUrl;
+
       const updatedProfile = {
         ...parsedProfile,
         fullName: data.name,
@@ -581,7 +597,7 @@ export default function ProfileClient() {
         heightCm: data.heightCm,
         currentWeightKg: data.currentWeightKg,
         imageUrl: result.data.imageUrl,
-        avatarUrl: result.data.imageUrl,
+        avatarUrl: imageUrlWithTimestamp,
         healthInfo: {
           bloodPressure: data.bloodPressure,
           bloodGlucose: data.bloodGlucose,
@@ -599,8 +615,7 @@ export default function ProfileClient() {
       
       setUser(updatedProfile);
       setUserData(updatedProfile);
-
-      await fetchUserData();
+      setAvatarPreview(imageUrlWithTimestamp);
 
       toast({
         title: "Profile Updated",
@@ -795,7 +810,7 @@ export default function ProfileClient() {
               className="relative flex-shrink-0"
             >
               <Avatar className="h-36 w-36 md:h-44 md:w-44 border-4 border-primary shadow-xl">
-                <AvatarImage src={user.avatarUrl} alt={user.name} />
+                <AvatarImage src={`${user.avatarUrl || "/path/to/default/avatar.png"}${user.avatarUrl?.includes("?") ? "&" : "?"}t=${avatarTimestamp}`} alt={user.name} />
                 <AvatarFallback className="text-5xl bg-zinc-700 text-primary font-bold">
                   {initials}
                 </AvatarFallback>
@@ -839,7 +854,7 @@ export default function ProfileClient() {
                       <div className="flex items-center gap-4">
                         <Avatar className="h-24 w-24 border-2 border-zinc-700">
                           <AvatarImage
-                            src={avatarPreview || user.avatarUrl}
+                            src={`${avatarPreview || user.avatarUrl || "/path/to/default/avatar.png"}${(avatarPreview || user.avatarUrl)?.includes("?") ? "&" : "?"}t=${avatarTimestamp}`}
                             alt="Avatar preview"
                           />
                           <AvatarFallback className="bg-zinc-800 text-primary text-2xl">
