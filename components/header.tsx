@@ -19,6 +19,7 @@ import {
   Camera,
   HomeIcon,
   Apple,
+  ActivitySquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -86,6 +87,12 @@ const otherFeatureItems: NavItem[] = [
     label: "Calorie & TDEE Calculator",
     icon: Zap,
     description: "Estimate your TDEE and plan calorie goals.",
+  },
+  {
+    href: "/exercise-equipment",
+    label: "Exercise & Equipment",
+    icon: ActivitySquare,
+    description: "Get personalized exercise and equipment recommendations based on your health condition.",
   },
 ];
 
