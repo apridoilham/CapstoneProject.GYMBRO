@@ -164,3 +164,13 @@ export function verifyUser(req: NextRequest) {
 		return null;
 	}
 }
+
+export const checkHypertensi = (inp: any) => {
+	if (inp.systolic > 130 && inp.diastolic > 80) return true;
+	return false;
+};
+
+export const checkDiabet = (inp: any) => {
+	if (inp >= 126) return true;
+	return false;
+};

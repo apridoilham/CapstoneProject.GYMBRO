@@ -1,5 +1,5 @@
 import { connectDB } from "@/lib/connection";
-import { verifyUser } from "@/lib/utils";
+import { verifyUser, checkHypertensi, checkDiabet } from "@/lib/utils";
 import UsersModel from "@/models/UserModel";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -34,6 +34,8 @@ export async function GET(
 			BloodPressure: user.BloodPressure ?? null,
 			FastingGlucose: user.FastingGlucose ?? null,
 			imageUrl: user.imageUrl ?? null,
+			isHypertension: checkHypertensi(user.BloodPressure),
+			isDiabetes: checkDiabet(user.FastingGlucose),
 		};
 		return NextResponse.json({ data: finalData, success: true });
 	} catch (error) {

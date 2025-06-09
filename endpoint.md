@@ -197,21 +197,24 @@ Authorization: Bearer <token>
 
 ```json
 {
-  "data": {
-    "email": "coba2@gmail.com",
-    "fullName": "Ccoba 2",
-    "date": null,
-    "age": 20,
-    "gender": "Perempuan",
-    "height": 150,
-    "weight": 45,
-    "BloodPressure": {
-      "systolic": 130,
-      "diastolic": 80
-    },
-    "FastingGlucose": 95
-  },
-  "success": true
+	"data": {
+		"email": "coba@gmail.com",
+		"fullName": "Akun Testing 1",
+		"date": "2000-11-10T00:00:00.000Z",
+		"age": 24,
+		"gender": "Laki-laki",
+		"height": 190,
+		"weight": 79,
+		"BloodPressure": {
+			"systolic": 120,
+			"diastolic": 80
+		},
+		"FastingGlucose": 95,
+		"imageUrl": "<link>",
+		"isHypertension": false,
+		"isDiabetes": false
+	},
+	"success": true
 }
 ```
 
@@ -292,7 +295,7 @@ Untuk bagian date pastikan valid date yang ada di js new Date()
 # Endpoint: `/food`
 
 ## Deskripsi
-Mengubah atau menambahkan data yang belum terinput
+Mengintegerasikan API Food Analyze dengan website
 
 ## HTTP Request
 
@@ -310,7 +313,7 @@ POST /food
 ## Contoh Request
 
 ```http
-PUT /user
+POST /food
 Host: api.example.com
 Content-Type: multipart/form-data
 Authorization: Bearer <token>
@@ -338,5 +341,65 @@ image: <file>
 		},
 		"imageUrl": "<linkImage>"
 	}
+}
+```
+
+# Endpoint: `/exercise`
+
+## Deskripsi
+Mengintegerasikan API Exercise analyze dengan website
+
+## HTTP Request
+
+```
+POST /exercise
+```
+
+## Headers
+
+| Nama            | Tipe    | Deskripsi                                 |
+|-----------------|---------|-------------------------------------------|
+| Content-Type    | string  | `application/json`                     		|
+| Authorization   | string  | `Bearer <token>`                          |
+
+## Contoh Request
+
+```http
+POST /exercise
+Host: api.example.com
+Content-Type: application/json
+```
+
+## Payload
+```
+{
+  "gender": "male",
+  "age": 30,
+  "height": 175,
+  "weight": 70,
+  "isHypertension": false,
+  "isDiabetes": false
+}
+```
+
+## Output
+
+```json
+{
+	"message": "Proccess Success",
+	"data": {
+		"Fitness Goal": "Weight Gain",
+		"Recommended Exercises": [
+			"bench presses",
+			"deadlifts",
+			"overhead presses",
+			"squats"
+		],
+		"Required Equipment": [
+			"barbells",
+			"dumbbells"
+		]
+	},
+	"success": false
 }
 ```

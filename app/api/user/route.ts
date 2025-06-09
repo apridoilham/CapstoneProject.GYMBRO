@@ -175,14 +175,6 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
 			}
 		);
 
-		// Verifikasi final
-		const finalUser = await UsersModel.findOne({ email });
-
-		// Debug info tambahan
-		const totalUsers = await UsersModel.countDocuments();
-		const dbName = UsersModel.db?.name;
-		const collectionName = UsersModel.collection?.name;
-
 		if (!updatedUser) {
 			return NextResponse.json(
 				{ message: "User update failed", success: false },
