@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
 import {
   Form,
   FormControl,
@@ -29,9 +30,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
-  sex: z.enum(["Male", "Female"]),
+  sex: z.enum(["Laki-laki", "Perempuan"]),
   age: z.coerce.number().min(1).max(120),
   height: z.coerce.number().min(0.5).max(3),
   weight: z.coerce.number().min(20).max(300),
@@ -48,10 +50,12 @@ export default function ExerciseEquipmentClient() {
     equipment: string[];
   } | null>(null);
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      sex: "Male",
+      sex: "Laki-laki",
       age: 25,
       height: 1.75,
       weight: 70,
@@ -59,6 +63,36 @@ export default function ExerciseEquipmentClient() {
       diabetes: "No",
     },
   });
+
+  useEffect(() => {
+    const token = localStorage.getItem("tokenGYMBRO");
+    const storedProfile = localStorage.getItem('gymBroUserProfile');
+    const profile = storedProfile ? JSON.parse(storedProfile) : null;
+    const getInitData = async () => {
+      setIsLoading(true);
+      try {
+        const res = await axios.get(`${location.origin}/api/user/${profile.email}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        form.reset({
+          sex: res.data.data.gender || "Laki-laki",
+          age: res.data.data.age || 25,
+          height: res.data.data.height ? res.data.data.height / 100 : 1.75,
+          weight: res.data.data.weight || 70,
+          hypertension: res.data.data.isHypertension || "No",
+          diabetes: res.data.data.isDiabetes || "No",
+        });
+        setIsLoading(false);
+      } catch (err) {
+        console.error("User unauthorized");
+        setIsLoading(false);
+      }
+    }
+    if (token) getInitData();
+  }, [form]);
 
   const calculateBMI = (height: number, weight: number): number => {
     return weight / (height * height);
@@ -111,20 +145,40 @@ export default function ExerciseEquipmentClient() {
     return equipment;
   };
 
-  const onSubmit = (values: FormValues) => {
-    const bmi = calculateBMI(values.height, values.weight);
-    const fitnessGoal = getFitnessGoal(bmi);
-    const hasDiabetes = values.diabetes === "Yes";
-    const hasHypertension = values.hypertension === "Yes";
+  const onSubmit = async (values: FormValues) => {
+    console.log(values);
+    // const bmi = calculateBMI(values.height, values.weight);
+    // const fitnessGoal = getFitnessGoal(bmi);
+    // const hasDiabetes = values.diabetes === "Yes";
+    // const hasHypertension = values.hypertension === "Yes";
 
-    const exercises = getExerciseRecommendations(hasDiabetes, hasHypertension);
-    const equipment = getEquipmentRecommendations(hasDiabetes, hasHypertension);
+    // const exercises = getExerciseRecommendations(hasDiabetes, hasHypertension);
+    // const equipment = getEquipmentRecommendations(hasDiabetes, hasHypertension);
+    setIsLoading(true);
+    const data = {
+      "gender": values.sex,
+      "age": values.age,
+      "height": (values.height * 100),
+      "weight": values.weight,
+      "isHypertension": (values.hypertension == "Yes") ? true : false,
+      "isDiabetes": (values.diabetes == "Yes") ? true : false
+    }
 
-    setResults({
-      fitnessGoal,
-      exercises,
-      equipment,
-    });
+    try {
+      const res = await axios.post(`${location.origin}/api/exercise`, data);
+      const fitnessGoal = res.data.data.fitnessGoal;
+      const exercises = res.data.data.recommendedExercises;
+      const equipment = res.data.data.requiredEquipment;
+      setResults({
+        fitnessGoal,
+        exercises,
+        equipment,
+      });
+      setIsLoading(false);
+    } catch (err) {
+      console.error(err);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -163,8 +217,8 @@ export default function ExerciseEquipmentClient() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                              <SelectItem value="Male">Pria</SelectItem>
-                              <SelectItem value="Female">Wanita</SelectItem>
+                              <SelectItem value="Laki-laki">Pria</SelectItem>
+                              <SelectItem value="Perempuan">Wanita</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -286,8 +340,17 @@ export default function ExerciseEquipmentClient() {
                     />
                   </div>
 
-                  <Button type="submit" className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700">
-                    Analisis
+                  <Button type="submit" className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700" disabled={isLoading ? true : false}>
+                    {
+                      isLoading ? (
+                        <>
+                        <Loader2 className="animate-spin h-5 w-5 mr-2" />
+                          Loading
+                        </>
+                    ) : (
+                      <>Analisis</>
+                      )
+                    }
                   </Button>
                 </form>
               </Form>
