@@ -9,12 +9,12 @@ export async function POST(req: NextRequest) {
 			const resModel = await axios.post(
 				"https://web-production-4119.up.railway.app/predict",
 				{
-					Sex: gender,
+					Sex: gender == "male" ? true : false,
 					Age: age,
 					Height: height,
 					Weight: weight,
-					Hypertension: isHypertension ? "yes" : "no",
-					Diabetes: isDiabetes ? "yes" : "no",
+					Hypertension: isHypertension,
+					Diabetes: isDiabetes,
 				}
 			);
 

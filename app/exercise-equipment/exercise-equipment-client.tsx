@@ -55,7 +55,7 @@ export default function ExerciseEquipmentClient() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      sex: "Male",
+      sex: "Laki-laki",
       age: 25,
       height: 1.75,
       weight: 70,
@@ -78,7 +78,7 @@ export default function ExerciseEquipmentClient() {
           },
         });
         form.reset({
-          sex: res.data.data.gender || "Male",
+          sex: res.data.data.gender || "Laki-laki",
           age: res.data.data.age || 25,
           height: res.data.data.height ? res.data.data.height / 100 : 1.75,
           weight: res.data.data.weight || 70,
@@ -166,9 +166,9 @@ export default function ExerciseEquipmentClient() {
 
     try {
       const res = await axios.post(`${location.origin}/api/exercise`, data);
-      const fitnessGoal = res.data.data["Fitness Goal"];
-      const exercises = res.data.data["Recommended Exercises"];
-      const equipment = res.data.data["Required Equipment"];
+      const fitnessGoal = res.data.data.fitnessGoal;
+      const exercises = res.data.data.recommendedExercises;
+      const equipment = res.data.data.requiredEquipment;
       setResults({
         fitnessGoal,
         exercises,
@@ -217,8 +217,8 @@ export default function ExerciseEquipmentClient() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                              <SelectItem value="Male">Pria</SelectItem>
-                              <SelectItem value="Female">Wanita</SelectItem>
+                              <SelectItem value="Laki-laki">Pria</SelectItem>
+                              <SelectItem value="Perempuan">Wanita</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
