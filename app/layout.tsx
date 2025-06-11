@@ -9,9 +9,27 @@ import { Toaster } from '@/components/ui/toaster';
 
 const inter = Inter({ subsets: ['latin'] });
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
 export const metadata: Metadata = {
+  metadataBase: new URL(APP_URL),
   title: 'GYM BRO - Unlock Your Peak Fitness Potential',
   description: 'Your ultimate partner for personalized fitness guidance, nutrition plans, and understanding your body better. Join the GYM BRO movement!',
+  applicationName: "GYM BRO",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "GYM BRO",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    siteName: "GYM BRO",
+    title: "GYM BRO: AI Fitness & Nutrition Mastery",
+    description: "Elevate your physique with GYM BRO. Hyper-personalized AI training, nutrition strategies, and intelligent body analysis.",
+  },
 };
 
 export default function RootLayout({
@@ -21,6 +39,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="theme-color" content="#000000" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+      </head>
       <body className={`${inter.className} antialiased`} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <div className="flex min-h-screen flex-col">
