@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyUser } from "@/lib/utils";
 import { Client } from "@gradio/client";
 
 export async function POST(req: NextRequest) {
     try {
-        // Cek token valid
-        const token = verifyUser(req);
-        if (!token) {
-            return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-        }
 
         const { message } = await req.json();
         if (!message || typeof message !== "string") {

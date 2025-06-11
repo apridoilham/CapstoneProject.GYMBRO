@@ -420,7 +420,6 @@ POST /chatbot
 | Nama            | Tipe    | Deskripsi                                 |
 |-----------------|---------|-------------------------------------------|
 | Content-Type    | string  | `application/json`                     		|
-| Authorization   | string  | `Bearer <token>`                          |
 
 ## Contoh Request
 
