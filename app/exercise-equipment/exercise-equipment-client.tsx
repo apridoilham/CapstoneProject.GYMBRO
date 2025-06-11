@@ -186,15 +186,15 @@ export default function ExerciseEquipmentClient() {
       <div className="container mx-auto max-w-4xl">
         <h1 className="text-3xl font-bold mb-2 text-white bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500">Exercise & Equipment</h1>
         <p className="text-gray-400 mb-8">
-          Dapatkan rekomendasi latihan dan peralatan fitness yang disesuaikan dengan kondisi kesehatan Anda.
+          Get personalized exercise and fitness equipment recommendations based on your health conditions.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <Card className="bg-zinc-900/70 border border-zinc-700/50">
             <CardHeader className="border-b border-zinc-700/50">
-              <CardTitle className="text-white">Data Kesehatan</CardTitle>
+              <CardTitle className="text-white">Health Data</CardTitle>
               <CardDescription className="text-gray-400">
-                Masukkan informasi kesehatan Anda untuk mendapatkan rekomendasi yang tepat
+                Enter your health information to get accurate recommendations
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
@@ -206,19 +206,19 @@ export default function ExerciseEquipmentClient() {
                       name="sex"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-300">Jenis Kelamin</FormLabel>
+                          <FormLabel className="text-gray-300">Sex</FormLabel>
                           <Select
                             onValueChange={field.onChange}
                             defaultValue={field.value}
                           >
                             <FormControl>
                               <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                                <SelectValue placeholder="Pilih jenis kelamin" />
+                                <SelectValue placeholder="Select sex" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                              <SelectItem value="Laki-laki">Pria</SelectItem>
-                              <SelectItem value="Perempuan">Wanita</SelectItem>
+                              <SelectItem value="Laki-laki">Male</SelectItem>
+                              <SelectItem value="Perempuan">Female</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -231,11 +231,11 @@ export default function ExerciseEquipmentClient() {
                       name="age"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-300">Umur</FormLabel>
+                          <FormLabel className="text-gray-300">Age</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
-                              placeholder="Masukkan umur"
+                              placeholder="Enter age"
                               className="bg-zinc-800 border-zinc-700 text-white"
                               {...field}
                             />
@@ -252,12 +252,12 @@ export default function ExerciseEquipmentClient() {
                       name="height"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-300">Tinggi (meter)</FormLabel>
+                          <FormLabel className="text-gray-300">Height (meters)</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
                               step="0.01"
-                              placeholder="Contoh: 1.75"
+                              placeholder="Example: 1.75"
                               className="bg-zinc-800 border-zinc-700 text-white"
                               {...field}
                             />
@@ -272,12 +272,12 @@ export default function ExerciseEquipmentClient() {
                       name="weight"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-300">Berat (kg)</FormLabel>
+                          <FormLabel className="text-gray-300">Weight (kg)</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
                               step="0.1"
-                              placeholder="Masukkan berat badan"
+                              placeholder="Enter weight"
                               className="bg-zinc-800 border-zinc-700 text-white"
                               {...field}
                             />
@@ -294,19 +294,19 @@ export default function ExerciseEquipmentClient() {
                       name="hypertension"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-300">Hipertensi</FormLabel>
+                          <FormLabel className="text-gray-300">Hypertension</FormLabel>
                           <Select
                             onValueChange={field.onChange}
                             defaultValue={field.value}
                           >
                             <FormControl>
                               <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                                <SelectValue placeholder="Apakah Anda memiliki hipertensi?" />
+                                <SelectValue placeholder="Do you have hypertension?" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                              <SelectItem value="Yes">Ya</SelectItem>
-                              <SelectItem value="No">Tidak</SelectItem>
+                              <SelectItem value="Yes">Yes</SelectItem>
+                              <SelectItem value="No">No</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -326,12 +326,12 @@ export default function ExerciseEquipmentClient() {
                           >
                             <FormControl>
                               <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                                <SelectValue placeholder="Apakah Anda memiliki diabetes?" />
+                                <SelectValue placeholder="Do you have diabetes?" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                              <SelectItem value="Yes">Ya</SelectItem>
-                              <SelectItem value="No">Tidak</SelectItem>
+                              <SelectItem value="Yes">Yes</SelectItem>
+                              <SelectItem value="No">No</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -348,7 +348,7 @@ export default function ExerciseEquipmentClient() {
                           Loading
                         </>
                     ) : (
-                      <>Analisis</>
+                      <>Analyze</>
                       )
                     }
                   </Button>
@@ -360,16 +360,16 @@ export default function ExerciseEquipmentClient() {
           {results && (
             <Card className="bg-zinc-900/70 border border-zinc-700/50">
               <CardHeader className="border-b border-zinc-700/50">
-                <CardTitle className="text-white">Hasil Analisis</CardTitle>
+                <CardTitle className="text-white">Analysis Results</CardTitle>
                 <CardDescription className="text-gray-400">
-                  Rekomendasi berdasarkan data kesehatan Anda
+                  Recommendations based on your health data
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="space-y-6">
                   <div>
                     <h3 className="font-medium text-sm text-gray-400 mb-2">
-                      Tujuan Fitness
+                      Fitness Goal
                     </h3>
                     <Badge variant="outline" className="text-lg py-2 px-4 font-semibold border-indigo-500/50 text-indigo-300 bg-zinc-900/50">
                       {results.fitnessGoal}
@@ -378,7 +378,7 @@ export default function ExerciseEquipmentClient() {
 
                   <div>
                     <h3 className="font-medium text-sm text-gray-400 mb-2">
-                      Latihan yang Direkomendasikan
+                      Recommended Exercises
                     </h3>
                     <div className="flex flex-wrap gap-2">
                       {results.exercises.map((exercise, index) => (
@@ -391,7 +391,7 @@ export default function ExerciseEquipmentClient() {
 
                   <div>
                     <h3 className="font-medium text-sm text-gray-400 mb-2">
-                      Peralatan yang Direkomendasikan
+                      Recommended Equipment
                     </h3>
                     <div className="flex flex-wrap gap-2">
                       {results.equipment.map((equipment, index) => (
@@ -409,4 +409,4 @@ export default function ExerciseEquipmentClient() {
       </div>
     </div>
   );
-} 
+}
