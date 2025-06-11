@@ -7,14 +7,14 @@ export async function POST(req: NextRequest) {
 
 		try {
 			const resModel = await axios.post(
-				"https://web-production-4119.up.railway.app/predict",
+				"https://web-production-377ff.up.railway.app/predict",
 				{
-					Sex: gender == "male" ? true : false,
 					Age: age,
+					Diabetes: isDiabetes ? 1 : 0,
 					Height: height,
+					Hypertension: isHypertension ? 1 : 0,
+					Sex: gender == "male" ? 1 : 0,
 					Weight: weight,
-					Hypertension: isHypertension,
-					Diabetes: isDiabetes,
 				}
 			);
 

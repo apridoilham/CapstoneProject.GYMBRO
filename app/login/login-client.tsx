@@ -280,7 +280,7 @@ export default function LoginClient() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-primary hover:bg-primary/80 text-white font-bold py-2.5 rounded-md flex items-center justify-center"
+                className="w-full bg-primary hover:bg-primary/80 text-gray-800 font-bold py-2.5 rounded-md flex items-center justify-center"
               >
                 {isSubmitting ? (
                   <>

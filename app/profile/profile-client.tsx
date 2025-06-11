@@ -67,12 +67,11 @@ const BroText = ({ children }: { children: React.ReactNode }) => (
   </span>
 );
 
-type GenderType = "male" | "female" | "other" | "prefer_not_to_say";
+type GenderType = "male" | "female";
 
 interface UserProfileData {
   id: string;
   name: string;
-  username: string;
   avatarUrl: string;
   imageUrl?: string;
   email?: string;
@@ -81,25 +80,16 @@ interface UserProfileData {
   gender?: GenderType;
   heightCm?: number;
   currentWeightKg?: number;
-  bio?: string;
   healthInfo?: {
     bloodPressure?: string;
     bloodGlucose?: string;
     notes?: string;
-  };
-  socialMedia?: {
-    instagram?: string;
-    twitter?: string;
-    website?: string;
-    linkedin?: string;
   };
 }
 
 const GENDER_OPTIONS: [GenderType, ...GenderType[]] = [
   "male",
   "female",
-  "other",
-  "prefer_not_to_say",
 ];
 const MIN_HEIGHT_CM = 100;
 const MAX_HEIGHT_CM = 250;
@@ -113,13 +103,6 @@ const profileSchema = z.object({
     .string()
     .min(2, { message: "Name requires at least 2 characters." })
     .max(50, { message: "Name too long (max 50)." }),
-  username: z
-    .string()
-    .min(3, { message: "Username requires at least 3 characters." })
-    .max(30, { message: "Username too long (max 30)." })
-    .regex(/^[a-zA-Z0-9_.]+$/, {
-      message: "Username: letters, numbers, '_', '.' only.",
-    }),
   avatarFile: z
     .custom<File>(
       (val) => val === null || val === undefined || val instanceof File,
@@ -176,11 +159,6 @@ const profileSchema = z.object({
       .optional()
       .nullable()
   ),
-  bio: z
-    .string()
-    .max(300, { message: "Bio max 300 characters." })
-    .optional()
-    .nullable(),
   bloodPressure: z
     .string()
     .regex(/^$|^\d{2,3}\/\d{2,3}$/, {
@@ -288,55 +266,6 @@ const DetailItem = ({
   );
 };
 
-const SocialLinkDisplay = ({
-  href,
-  icon: Icon,
-  platformName,
-}: {
-  href?: string;
-  icon: React.ElementType;
-  platformName: string;
-}) => {
-  if (!href || href.trim() === "") return null;
-  const fullUrl =
-    platformName === "Instagram" && !href.startsWith("http")
-      ? `https://instagram.com/${href}`
-      : platformName === "Twitter/X" && !href.startsWith("http")
-      ? `https://x.com/${href}`
-      : href;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: -10 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-    >
-      <Link
-        href={fullUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center text-gray-400 hover:text-primary p-3 -ml-3 sm:ml-0 rounded-lg hover:bg-zinc-800/70 transition-all w-full group"
-        aria-label={platformName}
-      >
-        <Icon
-          size={20}
-          className="mr-3 flex-shrink-0 text-gray-500 group-hover:text-primary transition-colors"
-        />
-        <span className="truncate text-sm">
-          {platformName === "Website" || platformName === "LinkedIn"
-            ? "View Profile / Site"
-            : `@${href}`}
-        </span>
-        <ArrowRight
-          size={16}
-          className="ml-auto opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200 text-primary"
-        />
-      </Link>
-    </motion.div>
-  );
-};
-
 const FormFieldWrapper = ({
   label,
   id,
@@ -362,24 +291,16 @@ const FormFieldWrapper = ({
 const initialUserProfile: UserProfileData = {
   id: "",
   name: "",
-  username: "",
   avatarUrl: "/images/default-avatar.png",
   email: "",
   dateOfBirth: "",
   gender: undefined,
   heightCm: undefined,
   currentWeightKg: undefined,
-  bio: "",
   healthInfo: {
     bloodPressure: "",
     bloodGlucose: "",
     notes: "",
-  },
-  socialMedia: {
-    instagram: "",
-    twitter: "",
-    website: "",
-    linkedin: "",
   },
 };
 
@@ -408,7 +329,6 @@ export default function ProfileClient() {
       }
 
       let email = "";
-      let currentUsername = "";
       let savedAvatarUrl = "";
       let savedDateOfBirth = "";
       
@@ -416,7 +336,6 @@ export default function ProfileClient() {
         try {
           const parsedProfile = JSON.parse(userProfile);
           email = parsedProfile.email || "";
-          currentUsername = parsedProfile.username || "";
           savedAvatarUrl = parsedProfile.avatarUrl || parsedProfile.imageUrl || "";
           savedDateOfBirth = parsedProfile.dateOfBirth || "";
           console.log("Saved data from localStorage - Avatar:", savedAvatarUrl, "Date:", savedDateOfBirth);
@@ -483,7 +402,6 @@ export default function ProfileClient() {
       const updatedUserProfile: UserProfileData = {
         id: result.data._id || "unknown",
         name: result.data.fullName || "Unknown User",
-        username: currentUsername || result.data.email?.split("@")[0] || "",
         email: email,
         avatarUrl: finalAvatarUrl,
         imageUrl: finalAvatarUrl,
@@ -492,14 +410,9 @@ export default function ProfileClient() {
         gender:
           result.data.gender === "Laki-laki"
             ? "male"
-            : result.data.gender === "Perempuan"
-            ? "female"
-            : result.data.gender === "Lainnya"
-            ? "other"
-            : "prefer_not_to_say",
+            : "female",
         heightCm: result.data.height || undefined,
         currentWeightKg: result.data.weight || undefined,
-        bio: "",
         healthInfo: {
           bloodPressure: result.data.BloodPressure
             ? `${result.data.BloodPressure.systolic}/${result.data.BloodPressure.diastolic}`
@@ -508,12 +421,6 @@ export default function ProfileClient() {
             ? result.data.FastingGlucose.toString()
             : "",
           notes: "",
-        },
-        socialMedia: {
-          instagram: "",
-          twitter: "",
-          linkedin: "",
-          website: "",
         },
       };
 
@@ -631,7 +538,6 @@ export default function ProfileClient() {
       let genderValue = "Tidak Disebutkan";
       if (data.gender === "male") genderValue = "Laki-laki";
       else if (data.gender === "female") genderValue = "Perempuan";
-      else if (data.gender === "other") genderValue = "Lainnya";
       formData.append("gender", genderValue);
       
       formData.append("height", data.heightCm?.toString() || "0");
@@ -704,12 +610,6 @@ export default function ProfileClient() {
           bloodGlucose: data.bloodGlucose,
           notes: data.healthNotes,
         },
-        socialMedia: {
-          instagram: data.instagram,
-          twitter: data.twitter,
-          linkedin: data.linkedin,
-          website: data.website,
-        },
       };
 
       console.log("Saving updated profile to localStorage:", updatedProfile);
@@ -775,8 +675,6 @@ export default function ProfileClient() {
         loadedProfile = {
           ...initialUserProfile,
           ...parsedProfile,
-          username:
-            parsedProfile.username || parsedProfile.email?.split("@")[0] || "",
         };
       } catch (e) {
         console.error("Failed to parse profile from localStorage", e);
@@ -789,19 +687,12 @@ export default function ProfileClient() {
     setUser(profileWithAge);
     reset({
       name: profileWithAge.name || "",
-      username: profileWithAge.username || "",
       dateOfBirth: profileWithAge.dateOfBirth || "",
-      gender: profileWithAge.gender || "prefer_not_to_say",
       heightCm: profileWithAge.heightCm ?? undefined,
       currentWeightKg: profileWithAge.currentWeightKg ?? undefined,
-      bio: profileWithAge.bio || "",
       bloodPressure: profileWithAge.healthInfo?.bloodPressure || "",
       bloodGlucose: profileWithAge.healthInfo?.bloodGlucose || "",
       healthNotes: profileWithAge.healthInfo?.notes || "",
-      instagram: profileWithAge.socialMedia?.instagram || "",
-      twitter: profileWithAge.socialMedia?.twitter || "",
-      linkedin: profileWithAge.socialMedia?.linkedin || "",
-      website: profileWithAge.socialMedia?.website || "",
       avatarFile: null,
     });
     setAvatarPreview(profileWithAge.avatarUrl);
@@ -993,30 +884,17 @@ export default function ProfileClient() {
                         </div>
                       </div>
                     </FormFieldWrapper>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
-                      <FormFieldWrapper
-                        label="Full Name"
+                    <FormFieldWrapper
+                      label="Full Name"
+                      id="name"
+                      error={errors.name?.message}
+                    >
+                      <Input
                         id="name"
-                        error={errors.name?.message}
-                      >
-                        <Input
-                          id="name"
-                          {...register("name")}
-                          className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-400"
-                        />
-                      </FormFieldWrapper>
-                      <FormFieldWrapper
-                        label="Username"
-                        id="username"
-                        error={errors.username?.message}
-                      >
-                        <Input
-                          id="username"
-                          {...register("username")}
-                          className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-400"
-                        />
-                      </FormFieldWrapper>
-                    </div>
+                        {...register("name")}
+                        className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-400"
+                      />
+                    </FormFieldWrapper>
                     <FormFieldWrapper
                       label="Date of Birth"
                       id="dob"
@@ -1098,18 +976,6 @@ export default function ProfileClient() {
                         />
                       </FormFieldWrapper>
                     </div>
-                    <FormFieldWrapper
-                      label="Bio"
-                      id="bio"
-                      error={errors.bio?.message}
-                    >
-                      <Textarea
-                        id="bio"
-                        {...register("bio")}
-                        className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-400 min-h-[120px]"
-                        placeholder="Your story, your strength... (max 300 chars)"
-                      />
-                    </FormFieldWrapper>
                     <Separator className="my-5 bg-zinc-700/60" />
                     <h3 className="text-lg font-semibold text-white pt-1 flex items-center">
                       Health Vitals{" "}
@@ -1139,64 +1005,6 @@ export default function ProfileClient() {
                         {...register("bloodGlucose")}
                         className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-400"
                         placeholder="Value (mg/dL or mmol/L)"
-                      />
-                    </FormFieldWrapper>
-                    <FormFieldWrapper
-                      label="Other Health Notes"
-                      id="healthnotes"
-                      error={errors.healthNotes?.message}
-                    >
-                      <Textarea
-                        id="healthnotes"
-                        {...register("healthNotes")}
-                        className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-400 min-h-[80px]"
-                      />
-                    </FormFieldWrapper>
-                    <Separator className="my-5 bg-zinc-700/60" />
-                    <h3 className="text-lg font-semibold text-white pt-1 flex items-center">
-                      Social Presence{" "}
-                      <span className="text-sm text-gray-300 ml-2">
-                        (Optional)
-                      </span>
-                    </h3>
-                    <FormFieldWrapper label="Instagram Handle" id="ig">
-                      <Input
-                        id="ig"
-                        {...register("instagram")}
-                        className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-400"
-                        placeholder="your_insta_handle"
-                      />
-                    </FormFieldWrapper>
-                    <FormFieldWrapper label="Twitter/X Handle" id="tw">
-                      <Input
-                        id="tw"
-                        {...register("twitter")}
-                        className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-400"
-                        placeholder="YourXProfile"
-                      />
-                    </FormFieldWrapper>
-                    <FormFieldWrapper
-                      label="LinkedIn Profile URL"
-                      id="linkedin"
-                      error={errors.linkedin?.message}
-                    >
-                      <Input
-                        id="linkedin"
-                        {...register("linkedin")}
-                        className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-400"
-                        placeholder="https://linkedin.com/in/..."
-                      />
-                    </FormFieldWrapper>
-                    <FormFieldWrapper
-                      label="Personal Website URL"
-                      id="web"
-                      error={errors.website?.message}
-                    >
-                      <Input
-                        id="web"
-                        {...register("website")}
-                        className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-400"
-                        placeholder="https://your.site"
                       />
                     </FormFieldWrapper>
                   </form>
@@ -1229,26 +1037,15 @@ export default function ProfileClient() {
             </motion.div>
             <motion.div
               variants={itemAnimationVariants}
-              className="flex-1 md:pl-6 text-center sm:text-left"
+              className="flex-1 md:pl-6 text-center sm:text-left mt-12"
             >
               <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
                 {user.name}
               </h1>
-              <p className="text-xl text-primary font-semibold mt-1">
-                @{user.username}
-              </p>
               {user.email && (
                 <p className="text-sm text-gray-400 mt-2.5 tracking-wide">
                   {user.email}
                 </p>
-              )}
-              {user.bio && (
-                <motion.p
-                  variants={itemAnimationVariants}
-                  className="text-gray-300 mt-5 text-sm md:text-base leading-relaxed max-w-xl prose prose-sm prose-invert prose-p:text-gray-300 prose-p:leading-relaxed"
-                >
-                  {user.bio}
-                </motion.p>
               )}
             </motion.div>
           </div>
@@ -1336,42 +1133,6 @@ export default function ProfileClient() {
                       value={user.healthInfo.notes}
                     />
                   )}
-                </CardContent>
-              </Card>
-            )}
-
-            {(user.socialMedia?.instagram ||
-              user.socialMedia?.twitter ||
-              user.socialMedia?.linkedin ||
-              user.socialMedia?.website) && (
-              <Card className="bg-zinc-900 border-zinc-800 shadow-xl">
-                <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-primary flex items-center">
-                    <Users size={22} className="mr-2.5" />
-                    Connect Online
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 pt-2 px-4 sm:px-6 pb-4">
-                  <SocialLinkDisplay
-                    href={user.socialMedia.website}
-                    icon={Globe}
-                    platformName="Website"
-                  />
-                  <SocialLinkDisplay
-                    href={user.socialMedia.instagram}
-                    icon={Instagram}
-                    platformName="Instagram"
-                  />
-                  <SocialLinkDisplay
-                    href={user.socialMedia.twitter}
-                    icon={Twitter}
-                    platformName="Twitter/X"
-                  />
-                  <SocialLinkDisplay
-                    href={user.socialMedia.linkedin}
-                    icon={Linkedin}
-                    platformName="LinkedIn"
-                  />
                 </CardContent>
               </Card>
             )}

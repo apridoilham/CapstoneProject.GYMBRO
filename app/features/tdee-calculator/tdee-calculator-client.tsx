@@ -468,7 +468,7 @@ export default function TdeeCalculatorClient() {
                   <SelectTrigger className="w-full mt-1 bg-white border-zinc-700">
                     <SelectValue placeholder="Select activity level" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border-zinc-700 text-white">
+                  <SelectContent className="bg-white border-zinc-700 text-gray-800">
                     <SelectItem value="sedentary">
                       Sedentary (office job, minimal physical activity)
                     </SelectItem>
@@ -580,7 +580,7 @@ export default function TdeeCalculatorClient() {
               <Button
                 onClick={calculateTdee}
                 disabled={isCalculating}
-                className="w-full bg-white text-white-foreground hover:bg-white/90 font-bold py-3.5 text-lg mt-6 h-14"
+                className="w-full bg-white text-gray-800 hover:bg-white/90 font-bold py-3.5 text-lg mt-6 h-14"
               >
                 {isCalculating ? (
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />

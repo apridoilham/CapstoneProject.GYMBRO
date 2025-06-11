@@ -371,7 +371,7 @@ Content-Type: application/json
 ```
 
 ## Payload
-```
+```json
 {
   "gender": "male",
   "age": 30,
@@ -386,20 +386,63 @@ Content-Type: application/json
 
 ```json
 {
+  "message": "Proccess Success",
+  "data": {
+    "fitnessGoal": "Weight Gain",
+    "recommendedExercises": [
+      "bench presses",
+      "deadlifts",
+      "overhead presses",
+      "squats"
+    ],
+    "requiredEquipment": [
+      "barbells",
+      "dumbbells"
+    ]
+  },
+  "success": false
+}
+```
+
+# Endpoint: `/chatbot`
+
+## Deskripsi
+Mengintegerasikan API Chat bot dengan website
+
+## HTTP Request
+
+```
+POST /chatbot
+```
+
+## Headers
+
+| Nama            | Tipe    | Deskripsi                                 |
+|-----------------|---------|-------------------------------------------|
+| Content-Type    | string  | `application/json`                     		|
+| Authorization   | string  | `Bearer <token>`                          |
+
+## Contoh Request
+
+```http
+POST /chatbot
+Host: api.example.com
+Content-Type: application/json
+```
+
+## Payload
+```json
+{
+  "message": "Lost weight"
+}
+```
+
+## Output
+
+```json
+{
 	"message": "Proccess Success",
-	"data": {
-		"Fitness Goal": "Weight Gain",
-		"Recommended Exercises": [
-			"bench presses",
-			"deadlifts",
-			"overhead presses",
-			"squats"
-		],
-		"Required Equipment": [
-			"barbells",
-			"dumbbells"
-		]
-	},
+	"data": "You are a helpful gym and fitness assistant.",
 	"success": false
 }
 ```
