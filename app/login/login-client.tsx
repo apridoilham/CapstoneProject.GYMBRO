@@ -9,13 +9,15 @@ import * as z from "zod";
 import axios from "axios";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox"; // Import Checkbox
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
 
+// Skema validasi untuk form login
 const loginSchema = z.object({
   email: z.string().email("Invalid email address, Bro."),
   password: z.string().min(6, "Password must be at least 6 characters, Champ."),
-  rememberMe: z.boolean().optional(),
+  rememberMe: z.boolean().optional(), // Pastikan ini opsional jika checkbox tidak selalu ada atau diisi
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -30,32 +32,38 @@ export default function LoginClient() {
     handleSubmit,
     formState: { errors, isSubmitting },
     setValue,
+    watch, // Gunakan watch untuk memantau nilai checkbox rememberMe
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
-      rememberMe: false,
+      rememberMe: false, // Defaultkan ke false
     },
   });
 
+  const rememberMe = watch("rememberMe"); // Amati nilai rememberMe
+
+  // Efek untuk memuat email yang diingat dari localStorage
   useEffect(() => {
     const rememberedEmail = localStorage.getItem("rememberedUserEmailGYMBRO");
     if (rememberedEmail) {
       setValue("email", rememberedEmail);
-      setValue("rememberMe", true);
+      setValue("rememberMe", true); // Set rememberMe menjadi true jika email ditemukan
     }
   }, [setValue]);
 
+  // Fungsi untuk menangani submit form
   const onSubmit = async (data: LoginFormValues) => {
     try {
       // Panggil API login menggunakan axios
       const loginResponse = await axios.post(
-        "/api/login", // Ubah dari URL absolute ke relatif
+        "/api/login",
         {
           email: data.email,
           password: data.password,
-        }
+        },
+        { withCredentials: true } // Penting untuk mengirim cookie jika backend menggunakannya
       );
 
       const loginResult = loginResponse.data;
@@ -68,26 +76,24 @@ export default function LoginClient() {
       const token = loginResult.token;
       localStorage.setItem("tokenGYMBRO", token);
 
-      // Simpan remember me preference
+      // Simpan/hapus preferensi remember me
       if (data.rememberMe) {
         localStorage.setItem("rememberedUserEmailGYMBRO", data.email);
       } else {
         localStorage.removeItem("rememberedUserEmailGYMBRO");
       }
 
-      // Set login status
+      // Set status login
       localStorage.setItem("isLoggedInGYMBRO", "true");
 
       // Ambil data lengkap pengguna dari endpoint /user/:email menggunakan axios
+      // Tambahkan timestamp ke URL untuk mencegah caching yang agresif pada beberapa CDN/proxy
       const userResponse = await axios.get(
-        `/api/user/${data.email}`,  // Ubah dari URL absolute ke relatif
+        `/api/user/${data.email}?_t=${Date.now()}`, // Gunakan query parameter unik untuk mencegah cache
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
           },
-          params: { t: Date.now() } // Mencegah cache
         }
       );
 
@@ -101,9 +107,14 @@ export default function LoginClient() {
       // Verifikasi URL gambar dengan lebih ketat dan tambahkan logging
       let imageUrl = "/images/default-avatar.png"; // Default fallback
       console.log("Raw image URL from API:", userResult.data.imageUrl);
-      
-      if (userResult.data.imageUrl && userResult.data.imageUrl.includes("cloudinary.com")) {
-        // Pastikan URL cloudinary disimpan dengan benar dan tidak di-cache
+
+      // Asumsi Cloudinary URL selalu mengandung "cloudinary.com"
+      if (
+        userResult.data.imageUrl &&
+        typeof userResult.data.imageUrl === "string" && // Pastikan ini string
+        userResult.data.imageUrl.includes("cloudinary.com")
+      ) {
+        // Hapus parameter transformasi jika ada, atau pastikan URL adalah versi asli jika ingin mencegah caching
         imageUrl = userResult.data.imageUrl;
         console.log("Using Cloudinary image URL:", imageUrl);
       } else {
@@ -114,6 +125,7 @@ export default function LoginClient() {
       let formattedDate = "";
       if (userResult.data.date) {
         try {
+          // Pastikan format tanggal sesuai ISO 8601 YYYY-MM-DD
           formattedDate = new Date(userResult.data.date).toISOString().split('T')[0];
           console.log("Formatted date:", formattedDate);
         } catch (e) {
@@ -125,10 +137,10 @@ export default function LoginClient() {
       const userProfile = {
         id: userResult.data._id || "",
         email: userResult.data.email,
-        username: userResult.data.email.split("@")[0],
+        username: userResult.data.email.split("@")[0], // Username dari bagian email sebelum @
         name: userResult.data.fullName || "Unknown User",
         dateOfBirth: formattedDate,
-        age: userResult.data.age || undefined,
+        age: userResult.data.age || undefined, // Gunakan undefined jika tidak ada
         gender:
           userResult.data.gender === "Laki-laki"
             ? "male"
@@ -139,9 +151,9 @@ export default function LoginClient() {
             : "prefer_not_to_say",
         heightCm: userResult.data.height || undefined,
         currentWeightKg: userResult.data.weight || undefined,
-        avatarUrl: imageUrl,  // Simpan URL gambar yang sama di kedua properti
-        imageUrl: imageUrl,   // untuk mendukung kompatibilitas dengan kode yang mungkin menggunakan properti yang berbeda
-        bio: "",
+        avatarUrl: imageUrl,
+        imageUrl: imageUrl, // Untuk kompatibilitas
+        bio: userResult.data.bio || "", // Tambahkan bio jika ada
         healthInfo: {
           bloodPressure: userResult.data.BloodPressure
             ? `${userResult.data.BloodPressure.systolic}/${userResult.data.BloodPressure.diastolic}`
@@ -149,13 +161,13 @@ export default function LoginClient() {
           bloodGlucose: userResult.data.FastingGlucose
             ? userResult.data.FastingGlucose.toString()
             : "",
-          notes: "",
+          notes: userResult.data.notes || "", // Tambahkan notes jika ada
         },
         socialMedia: {
-          instagram: "",
-          twitter: "",
-          website: "",
-          linkedin: "",
+          instagram: userResult.data.instagram || "", // Tambahkan sosial media jika ada
+          twitter: userResult.data.twitter || "",
+          website: userResult.data.website || "",
+          linkedin: userResult.data.linkedin || "",
         },
       };
 
@@ -170,7 +182,7 @@ export default function LoginClient() {
         description: "Welcome back, Bro! Getting you in...",
       });
 
-      // Tambah delay kecil sebelum redirect untuk memastikan event terproses
+      // Redirect setelah sukses login
       setTimeout(() => {
         router.push("/");
       }, 100);
@@ -187,6 +199,7 @@ export default function LoginClient() {
     }
   };
 
+  // Fungsi untuk mengubah visibilitas password
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -200,14 +213,14 @@ export default function LoginClient() {
               Welcome Back <span className="text-primary">BRO</span>!
             </h1>
             <p className="text-gray-400 mt-2">
-              Let's get you back to your gains journey
+              Let&apos;s get you back to your gains journey
             </p>
           </div>
 
           <div className="bg-zinc-900/50 px-6 py-8 rounded-lg border border-zinc-800/60 backdrop-blur shadow-xl">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-300 block">
+                <label htmlFor="email" className="text-sm font-semibold text-gray-300 block">
                   Email
                 </label>
                 <Input
@@ -217,14 +230,14 @@ export default function LoginClient() {
                   {...register("email")}
                 />
                 {errors.email && (
-                  <p className="text-red-500 text-xs">
+                  <p className="text-red-500 text-xs mt-1">
                     {errors.email.message?.toString()}
                   </p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-300 block">
+                <label htmlFor="password" className="text-sm font-semibold text-gray-300 block">
                   Password
                 </label>
                 <div className="relative">
@@ -239,6 +252,7 @@ export default function LoginClient() {
                     type="button"
                     onClick={togglePasswordVisibility}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white focus:outline-none"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
                       <EyeOff size={18} />
@@ -248,10 +262,28 @@ export default function LoginClient() {
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="text-red-500 text-xs">
+                  <p className="text-red-500 text-xs mt-1">
                     {errors.password.message?.toString()}
                   </p>
                 )}
+              </div>
+
+              {/* Checkbox "Remember Me" */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="rememberMe"
+                  checked={rememberMe} // Gunakan state `rememberMe` dari `watch`
+                  onCheckedChange={(checked) => {
+                    setValue("rememberMe", checked as boolean);
+                  }}
+                  className="border-gray-500 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                />
+                <label
+                  htmlFor="rememberMe"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-400"
+                >
+                  Remember me
+                </label>
               </div>
 
               <Button
@@ -275,7 +307,7 @@ export default function LoginClient() {
 
             <div className="mt-6 text-center">
               <p className="text-gray-400 text-sm">
-                Don't have an account?{" "}
+                Don&apos;t have an account?{" "}
                 <Link
                   href="/register"
                   className="text-primary hover:text-primary/80 transition font-medium"

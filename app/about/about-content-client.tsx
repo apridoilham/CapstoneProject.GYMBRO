@@ -164,7 +164,7 @@ export default function AboutContentClient() {
                       The modern pursuit of fitness is often a frustrating
                       navigation through a cacophony of generic advice and
                       fleeting trends. GYM <BroText>BRO</BroText> was conceived
-                      in this crucible – born from a fundamental need for an
+                      in this crucible &mdash; born from a fundamental need for an
                       intelligent, adaptive, and deeply personal fitness
                       solution.
                     </p>
@@ -173,7 +173,7 @@ export default function AboutContentClient() {
                       but true, actionable intelligence was scarce. Prevailing
                       digital fitness platforms served as static repositories,
                       rarely offering the dynamic, personalized guidance
-                      critical for sustainable transformation. This wasn't just
+                      critical for sustainable transformation. This wasn&apos;t just
                       an observation; it was our call to engineer a new
                       standard.
                     </p>
@@ -221,7 +221,7 @@ export default function AboutContentClient() {
                   delay={0.45}
                 >
                   We translate intricate data into clear, actionable strategies.
-                  Understand the 'why' behind every recommendation, empowering
+                  Understand the &apos;why&apos; behind every recommendation, empowering
                   you to own your journey.
                 </PillarCard>
               </div>
@@ -239,9 +239,9 @@ export default function AboutContentClient() {
                 >
                   <Quote size={44} className="mx-auto mb-8 text-primary/60" />
                   <p className="text-2xl md:text-3xl font-medium italic text-gray-200 leading-relaxed">
-                    "GYM <BroText>BRO</BroText> doesn't just offer a plan; it
+                    &quot;GYM <BroText>BRO</BroText> doesn&apos;t just offer a plan; it
                     forges a partnership. We provide the intelligence; you
-                    provide the iron will. Together, we sculpt mastery."
+                    provide the iron will. Together, we sculpt mastery.&quot;
                   </p>
                 </motion.div>
               </div>

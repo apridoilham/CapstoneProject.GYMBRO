@@ -436,7 +436,7 @@ export default function BmiCalculatorClient() {
             </h1>
             <p className="text-gray-400 mt-4 text-md md:text-lg max-w-2xl mx-auto">
               Instantly visualize your Body Mass Index. Adjust height and weight
-              to see real-time figure estimations. BMI is a general guide—true
+              to see real-time figure estimations. BMI is a general guide&mdash;true
               fitness is multifaceted!
             </p>
           </header>
@@ -677,7 +677,7 @@ export default function BmiCalculatorClient() {
                   >
                     <InfoIcon size={32} className="text-gray-500 mb-3" />
                     <p className="text-md font-semibold text-gray-400">
-                      Click "Analyze My BMI" for detailed results.
+                      Click &quot;Show My BMI Analysis&quot; for detailed results.
                     </p>
                   </motion.div>
                 )}

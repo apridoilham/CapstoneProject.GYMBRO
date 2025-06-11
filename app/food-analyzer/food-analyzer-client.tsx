@@ -50,23 +50,8 @@ export default function FoodAnalyzerClient() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      processFile(file);
-    }
-  };
-
-  const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const file = event.dataTransfer.files?.[0];
-    if (file) {
-      processFile(file);
-    }
-  }, []);
-
-  const processFile = (file: File) => {
+  // Memindahkan processFile ke dalam useCallback dan menambahkan dependensi
+  const processFile = useCallback((file: File) => {
     if (!file.type.startsWith("image/")) {
       toast({
         variant: "destructive",
@@ -84,7 +69,23 @@ export default function FoodAnalyzerClient() {
       setError(null);
     };
     reader.readAsDataURL(file);
+  }, [toast]); // Tambahkan `toast` sebagai dependensi `processFile`
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      processFile(file);
+    }
   };
+
+  const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const file = event.dataTransfer.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  }, [processFile]); // Menambahkan processFile sebagai dependensi useCallback ini
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -144,7 +145,7 @@ export default function FoodAnalyzerClient() {
       }
 
       const foodData = response.data.data.data;
-      const imageUrl = response.data.data.imageUrl;
+      // const imageUrl = response.data.data.imageUrl; // imageUrl tidak digunakan
 
       setAnalysisResult({
         foodName: foodData.name || "Unknown Food",
@@ -240,7 +241,7 @@ export default function FoodAnalyzerClient() {
                     <div className="flex flex-col items-center justify-center pt-5 pb-6 text-gray-400">
                       <UploadCloud className="w-10 h-10 mb-3" />
                       <p className="mb-2 text-sm">
-                        Drag & drop or{" "}
+                        Drag &amp; drop or{" "}
                         <span className="font-semibold text-sky-500">
                           click to upload
                         </span>
@@ -401,7 +402,7 @@ export default function FoodAnalyzerClient() {
                     Image ready, Bro!
                   </p>
                   <p className="text-sm text-gray-500">
-                    Click "Analyze Food" to get the nutritional breakdown.
+                    Click &quot;Analyze Food&quot; to get the nutritional breakdown.
                   </p>
                 </motion.div>
               )}
@@ -417,7 +418,7 @@ export default function FoodAnalyzerClient() {
                     Upload an image to get started.
                   </p>
                   <p className="text-sm text-gray-500">
-                    Let's see what you're fueling with!
+                    Let&apos;s see what you&apos;re fueling with!
                   </p>
                 </motion.div>
               )}

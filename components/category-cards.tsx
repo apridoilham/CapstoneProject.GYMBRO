@@ -97,7 +97,7 @@ const CategoryCards = ({ className }: { className?: string }) => {
           </h2>
           <p className="text-lg md:text-xl text-gray-200">
             Engineered for precision, designed for results. Explore the core of
-            GYM BRO's AI-powered platform.
+            GYM BRO&apos;s AI-powered platform.
           </p>
         </motion.div>
 
@@ -117,6 +117,7 @@ const CategoryCards = ({ className }: { className?: string }) => {
                   src={category.image}
                   alt={category.title}
                   fill
+                  // Perbaikan: Pastikan object-cover ada di className
                   className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
