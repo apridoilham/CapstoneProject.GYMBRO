@@ -502,7 +502,7 @@ export default function BmiCalculatorClient() {
                       <Label className="text-sm font-medium text-zinc-300 mb-2 block">
                         Unit System
                       </Label>
-                      <Select value={unitSystem} onValueChange={setUnitSystem}>
+                      <Select value={unitSystem} onValueChange={(value) => setUnitSystem(value as UnitSystem)}>
                         <SelectTrigger className="w-full bg-zinc-800 border border-zinc-700 text-white focus:ring-2 focus:ring-primary text-sm h-10">
                           <SelectValue placeholder="Select system" />
                         </SelectTrigger>
