@@ -254,29 +254,6 @@ export default function LoginClient() {
                 )}
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="rememberMe"
-                    className="rounded text-primary focus:ring-primary bg-zinc-800 border-zinc-600"
-                    {...register("rememberMe")}
-                  />
-                  <label
-                    htmlFor="rememberMe"
-                    className="text-sm text-gray-400 select-none"
-                  >
-                    Remember me
-                  </label>
-                </div>
-                <Link
-                  href="/forgot-password"
-                  className="text-sm text-primary hover:text-primary/80 transition"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-
               <Button
                 type="submit"
                 disabled={isSubmitting}
