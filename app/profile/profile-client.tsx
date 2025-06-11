@@ -288,209 +288,163 @@ const FormFieldWrapper = ({
   </div>
 );
 
-const initialUserProfile: UserProfileData = {
-  id: "",
-  name: "",
-  avatarUrl: "/images/default-avatar.png",
-  email: "",
-  dateOfBirth: "",
-  gender: undefined,
-  heightCm: undefined,
-  currentWeightKg: undefined,
-  healthInfo: {
-    bloodPressure: "",
-    bloodGlucose: "",
-    notes: "",
-  },
-};
-
 export default function ProfileClient() {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState<UserProfileData | null>(null);
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [user, setUser] = useState<UserProfileData | null>(null);
+  const [user, setUser] = useState<UserProfileData | null>(null); // Kept for UI rendering before form is ready
   const [avatarPreview, setAvatarPreview] = useState<string>("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [avatarTimestamp, setAvatarTimestamp] = useState<number>(Date.now());
+  const [IsEditingProfile, setIsEditingProfile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchUserData = async () => {
-    try {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    setValue,
+    formState: { errors, isSubmitting, dirtyFields },
+  } = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: "",
+      dateOfBirth: "",
+      gender: undefined,
+      heightCm: undefined,
+      currentWeightKg: undefined,
+      bloodPressure: "",
+      bloodGlucose: "",
+      healthNotes: "",
+      avatarFile: null,
+    },
+  });
+
+  useEffect(() => {
+    const fetchUserData = async () => {
       setIsLoading(true);
-      const token = localStorage.getItem("tokenGYMBRO");
-      const userProfile = localStorage.getItem("gymBroUserProfile");
+      try {
+        const token = localStorage.getItem("tokenGYMBRO");
+        const userProfile = localStorage.getItem("gymBroUserProfile");
 
-      if (!token) {
-        console.warn("No token found, redirecting to login");
-        router.push("/login");
-        return;
-      }
+        if (!token) {
+          router.push("/login");
+          return;
+        }
 
-      let email = "";
-      let savedAvatarUrl = "";
-      let savedDateOfBirth = "";
-      
-      if (userProfile) {
-        try {
+        let email = "";
+        let savedAvatarUrl = "";
+        let savedDateOfBirth = "";
+        
+        if (userProfile) {
           const parsedProfile = JSON.parse(userProfile);
           email = parsedProfile.email || "";
           savedAvatarUrl = parsedProfile.avatarUrl || parsedProfile.imageUrl || "";
           savedDateOfBirth = parsedProfile.dateOfBirth || "";
-          console.log("Saved data from localStorage - Avatar:", savedAvatarUrl, "Date:", savedDateOfBirth);
-        } catch (e) {
-          console.error("Failed to parse userProfile:", e);
         }
-      }
 
-      if (!email) {
-        console.error("No email found, redirecting to login");
-        router.push("/login");
-        return;
-      }
-
-      if (savedAvatarUrl && savedAvatarUrl.includes("cloudinary.com")) {
-        setAvatarPreview(savedAvatarUrl);
-      }
-
-      console.log("Fetching user data for email:", email);
-      const response = await axios.get(`/api/user/${email}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        },
-        params: { t: Date.now() }
-      });
-
-      console.log("Full API response:", response);
-      const result = response.data;
-      if (!result.success) {
-        throw new Error(result.message || "Failed to fetch user data");
-      }
-      
-      console.log("Full user data from API:", result.data);
-      console.log("Explicitly checking imageUrl from API:", result.data.imageUrl);
-      
-      let finalAvatarUrl;
-      
-      if (result.data.imageUrl && result.data.imageUrl.includes("cloudinary.com")) {
-        finalAvatarUrl = result.data.imageUrl;
-        console.log("Using image URL from API:", finalAvatarUrl);
-      } else if (savedAvatarUrl && savedAvatarUrl.includes("cloudinary.com")) {
-        finalAvatarUrl = savedAvatarUrl;
-        console.log("Using image URL from localStorage:", finalAvatarUrl);
-      } else {
-        finalAvatarUrl = "/images/default-avatar.png";
-        console.log("Using default image URL:", finalAvatarUrl);
-      }
-
-      let formattedDate = "";
-      if (result.data.date) {
-        try {
-          formattedDate = new Date(result.data.date).toISOString().split("T")[0];
-          console.log("Formatted date from API:", formattedDate);
-        } catch (e) {
-          console.error("Error formatting date from API:", e);
+        if (!email) {
+          router.push("/login");
+          return;
         }
-      }
-      
-      const finalDateOfBirth = formattedDate || savedDateOfBirth || "";
-      console.log("Final date of birth:", finalDateOfBirth);
 
-      const updatedUserProfile: UserProfileData = {
-        id: result.data._id || "unknown",
-        name: result.data.fullName || "Unknown User",
-        email: email,
-        avatarUrl: finalAvatarUrl,
-        imageUrl: finalAvatarUrl,
-        dateOfBirth: finalDateOfBirth,
-        age: result.data.age || calculateAge(finalDateOfBirth) || undefined,
-        gender:
-          result.data.gender === "Laki-laki"
-            ? "male"
-            : "female",
-        heightCm: result.data.height || undefined,
-        currentWeightKg: result.data.weight || undefined,
-        healthInfo: {
-          bloodPressure: result.data.BloodPressure
-            ? `${result.data.BloodPressure.systolic}/${result.data.BloodPressure.diastolic}`
-            : "",
-          bloodGlucose: result.data.FastingGlucose
-            ? result.data.FastingGlucose.toString()
-            : "",
-          notes: "",
-        },
-      };
+        const response = await axios.get(`/api/user/${email}`, {
+          headers: { Authorization: `Bearer ${token}`, 'Cache-Control': 'no-cache' },
+          params: { t: Date.now() }
+        });
 
-      console.log("Updated profile with avatar URL:", finalAvatarUrl);
-      setUserData(updatedUserProfile);
-      setUser(updatedUserProfile);
-      setAvatarPreview(finalAvatarUrl);
+        const result = response.data;
+        if (!result.success) throw new Error(result.message || "Failed to fetch user data");
 
-      localStorage.setItem(
-        "gymBroUserProfile",
-        JSON.stringify(updatedUserProfile)
-      );
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      
-      const savedProfile = localStorage.getItem("gymBroUserProfile");
-      if (savedProfile) {
-        try {
+        let finalAvatarUrl = result.data.imageUrl && result.data.imageUrl.includes("cloudinary.com")
+          ? result.data.imageUrl
+          : savedAvatarUrl && savedAvatarUrl.includes("cloudinary.com")
+          ? savedAvatarUrl
+          : "/images/default-avatar.png";
+
+        let formattedDate = "";
+        if (result.data.date) {
+          try {
+            formattedDate = new Date(result.data.date).toISOString().split("T")[0];
+          } catch (e) { console.error("Error formatting date from API:", e); }
+        }
+        
+        const finalDateOfBirth = formattedDate || savedDateOfBirth || "";
+
+        const updatedUserProfile: UserProfileData = {
+          id: result.data._id || "unknown",
+          name: result.data.fullName || "Unknown User",
+          email: email,
+          avatarUrl: finalAvatarUrl,
+          imageUrl: finalAvatarUrl,
+          dateOfBirth: finalDateOfBirth,
+          age: result.data.age || calculateAge(finalDateOfBirth) || undefined,
+          // --- FIX: Correctly map gender from API to form value ---
+          gender: result.data.gender === "Laki-laki" 
+                      ? "male" 
+                      : result.data.gender === "Perempuan" 
+                      ? "female" 
+                      : undefined,
+          heightCm: result.data.height || undefined,
+          currentWeightKg: result.data.weight || undefined,
+          healthInfo: {
+            bloodPressure: result.data.BloodPressure ? `${result.data.BloodPressure.systolic}/${result.data.BloodPressure.diastolic}` : "",
+            bloodGlucose: result.data.FastingGlucose ? result.data.FastingGlucose.toString() : "",
+            notes: "",
+          },
+        };
+
+        setUserData(updatedUserProfile);
+        setUser(updatedUserProfile);
+        setAvatarPreview(finalAvatarUrl);
+        localStorage.setItem("gymBroUserProfile", JSON.stringify(updatedUserProfile));
+
+        // --- FIX: Reset the form with the definitive data from the API ---
+        reset({
+          name: updatedUserProfile.name || "",
+          dateOfBirth: updatedUserProfile.dateOfBirth || "",
+          gender: updatedUserProfile.gender || null,
+          heightCm: updatedUserProfile.heightCm ?? undefined,
+          currentWeightKg: updatedUserProfile.currentWeightKg ?? undefined,
+          bloodPressure: updatedUserProfile.healthInfo?.bloodPressure || "",
+          bloodGlucose: updatedUserProfile.healthInfo?.bloodGlucose || "",
+          healthNotes: updatedUserProfile.healthInfo?.notes || "",
+          avatarFile: null,
+        });
+
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        const savedProfile = localStorage.getItem("gymBroUserProfile");
+        if (savedProfile) {
           const parsedProfile = JSON.parse(savedProfile);
-          if (parsedProfile.avatarUrl && parsedProfile.avatarUrl.includes("cloudinary.com")) {
-            console.log("Using backup data from localStorage");
-            setUser(parsedProfile);
-            setUserData(parsedProfile);
-            setAvatarPreview(parsedProfile.avatarUrl);
-            setIsLoading(false);
-            return;
-          }
-        } catch (e) {
-          console.error("Failed to parse backup profile", e);
+          setUser(parsedProfile);
+          setUserData(parsedProfile);
+          setAvatarPreview(parsedProfile.avatarUrl || '/images/default-avatar.png');
+          
+          // --- FIX: Also reset the form when falling back to localStorage data ---
+          reset({
+            name: parsedProfile.name || "",
+            dateOfBirth: parsedProfile.dateOfBirth || "",
+            gender: parsedProfile.gender || null,
+            heightCm: parsedProfile.heightCm ?? undefined,
+            currentWeightKg: parsedProfile.currentWeightKg ?? undefined,
+            bloodPressure: parsedProfile.healthInfo?.bloodPressure || "",
+            bloodGlucose: parsedProfile.healthInfo?.bloodGlucose || "",
+            healthNotes: parsedProfile.healthInfo?.notes || "",
+            avatarFile: null,
+          });
+        } else {
+            toast({ variant: "destructive", title: "Failed to load profile", description: "Please try again later" });
+            router.push("/login");
         }
+      } finally {
+        setIsLoading(false);
       }
-      
-      if (axios.isAxiosError(error)) {
-        toast({
-          variant: "destructive",
-          title: "Failed to load profile",
-          description:
-            error.response?.data?.message || "Please try again later",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Failed to load profile",
-          description: "An unexpected error occurred",
-        });
-      }
-      router.push("/login");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
-  useEffect(() => {
     fetchUserData();
-    
-    const checkProfileImage = () => {
-      const profile = localStorage.getItem("gymBroUserProfile");
-      if (profile) {
-        const parsed = JSON.parse(profile);
-        console.log("Current profile image in localStorage:", parsed.avatarUrl || parsed.imageUrl);
-      }
-    };
-    
-    checkProfileImage();
-    window.addEventListener('focus', checkProfileImage);
-    
-    return () => {
-      window.removeEventListener('focus', checkProfileImage);
-    };
-  }, []);
+  }, [reset, router, toast]);
 
   const updateUserData = async (data: ProfileFormValues) => {
     try {
@@ -502,29 +456,12 @@ export default function ProfileClient() {
         router.push("/login");
         return;
       }
-
-      let parsedProfile;
-      let savedAvatarUrl = "";
-      let savedDateOfBirth = "";
       
-      try {
-        parsedProfile = JSON.parse(userProfile);
-        savedAvatarUrl = parsedProfile.avatarUrl || parsedProfile.imageUrl || "";
-        savedDateOfBirth = parsedProfile.dateOfBirth || "";
-        console.log("Current data before update - Avatar:", savedAvatarUrl, "Date:", savedDateOfBirth);
-      } catch (e) {
-        console.error("Failed to parse userProfile:", e);
-        router.push("/login");
-        return;
-      }
-
+      const parsedProfile = JSON.parse(userProfile);
       const email = parsedProfile.email;
-      if (!email) {
-        throw new Error("No email found in userProfile");
-      }
-
-      const formData = new FormData();
+      if (!email) throw new Error("No email found in userProfile");
       
+      const formData = new FormData();
       formData.append("email", email);
       formData.append("fullName", data.name);
       
@@ -533,7 +470,6 @@ export default function ProfileClient() {
       
       const calculatedAge = calculateAge(dateString);
       formData.append("age", calculatedAge?.toString() || "0");
-      console.log("Sending date:", dateString, "Age:", calculatedAge);
       
       let genderValue = "Tidak Disebutkan";
       if (data.gender === "male") genderValue = "Laki-laki";
@@ -556,15 +492,7 @@ export default function ProfileClient() {
       if (data.avatarFile) {
         formData.append("image", data.avatarFile);
         hasNewImage = true;
-        console.log("New image being uploaded");
       }
-
-      console.log("Sending update request with data:", {
-        email,
-        fullName: data.name,
-        date: data.dateOfBirth,
-        hasNewImage
-      });
 
       const response = await axios.put("/api/user", formData, {
         headers: {
@@ -573,33 +501,20 @@ export default function ProfileClient() {
         },
       });
 
-      console.log("Update API response:", response);
       const result = response.data;
-      if (!result.success) {
-        throw new Error(result.message || "Failed to update user data");
-      }
+      if (!result.success) throw new Error(result.message || "Failed to update user data");
 
-      console.log("Received image URL from server:", result.data.imageUrl);
-
-      let finalAvatarUrl;
-      
-      if (result.data.imageUrl && result.data.imageUrl.includes("cloudinary.com")) {
-        finalAvatarUrl = result.data.imageUrl;
-        console.log("Using new image URL from API:", finalAvatarUrl);
-      } else if (!hasNewImage && savedAvatarUrl && savedAvatarUrl.includes("cloudinary.com")) {
-        finalAvatarUrl = savedAvatarUrl;
-        console.log("Keeping existing image URL:", finalAvatarUrl);
-      } else {
-        finalAvatarUrl = "/images/default-avatar.png";
-        console.log("Using default image URL");
-      }
+      let finalAvatarUrl = result.data.imageUrl && result.data.imageUrl.includes("cloudinary.com")
+        ? result.data.imageUrl
+        : !hasNewImage && parsedProfile.avatarUrl
+        ? parsedProfile.avatarUrl
+        : "/images/default-avatar.png";
       
       const updatedProfile = {
         ...parsedProfile,
-        fullName: data.name,
         name: data.name,
-        dateOfBirth: data.dateOfBirth || savedDateOfBirth,
-        age: calculateAge(data.dateOfBirth || savedDateOfBirth),
+        dateOfBirth: data.dateOfBirth || parsedProfile.dateOfBirth,
+        age: calculateAge(data.dateOfBirth || parsedProfile.dateOfBirth),
         gender: data.gender,
         heightCm: data.heightCm,
         currentWeightKg: data.currentWeightKg,
@@ -612,10 +527,7 @@ export default function ProfileClient() {
         },
       };
 
-      console.log("Saving updated profile to localStorage:", updatedProfile);
       localStorage.setItem("gymBroUserProfile", JSON.stringify(updatedProfile));
-      
-      // Trigger custom event untuk memastikan header mendeteksi perubahan
       window.dispatchEvent(new CustomEvent("userProfileUpdated"));
       
       setUser(updatedProfile);
@@ -631,73 +543,16 @@ export default function ProfileClient() {
       setIsEditDialogOpen(false);
     } catch (error) {
       console.error("Error updating user data:", error);
-      if (axios.isAxiosError(error)) {
-        toast({
-          variant: "destructive",
-          title: "Update Failed",
-          description:
-            error.response?.data?.message || "Please try again later",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Update Failed",
-          description: "An unexpected error occurred",
-        });
-      }
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+      });
     } finally {
       setIsLoading(false);
     }
   };
-
-  const onSubmitProfileForm = (data: any) => {
-    updateUserData(data);
-  };
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    control,
-    setValue,
-    formState: { errors, isSubmitting, dirtyFields },
-  } = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileSchema),
-    defaultValues: {},
-  });
-
-  useEffect(() => {
-    let loadedProfile = { ...initialUserProfile };
-    const storedProfileString = localStorage.getItem("gymBroUserProfile");
-    if (storedProfileString) {
-      try {
-        const parsedProfile = JSON.parse(storedProfileString);
-        loadedProfile = {
-          ...initialUserProfile,
-          ...parsedProfile,
-        };
-      } catch (e) {
-        console.error("Failed to parse profile from localStorage", e);
-      }
-    }
-    const profileWithAge = {
-      ...loadedProfile,
-      age: calculateAge(loadedProfile.dateOfBirth),
-    };
-    setUser(profileWithAge);
-    reset({
-      name: profileWithAge.name || "",
-      dateOfBirth: profileWithAge.dateOfBirth || "",
-      heightCm: profileWithAge.heightCm ?? undefined,
-      currentWeightKg: profileWithAge.currentWeightKg ?? undefined,
-      bloodPressure: profileWithAge.healthInfo?.bloodPressure || "",
-      bloodGlucose: profileWithAge.healthInfo?.bloodGlucose || "",
-      healthNotes: profileWithAge.healthInfo?.notes || "",
-      avatarFile: null,
-    });
-    setAvatarPreview(profileWithAge.avatarUrl);
-  }, [reset]);
-
+  
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     setValue("avatarFile", file || null, {
@@ -706,43 +561,19 @@ export default function ProfileClient() {
     });
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result as string);
-      };
+      reader.onloadend = () => setAvatarPreview(reader.result as string);
       reader.readAsDataURL(file);
     } else {
-      setAvatarPreview(user?.avatarUrl || initialUserProfile.avatarUrl);
+      setAvatarPreview(user?.avatarUrl || '/images/default-avatar.png');
     }
   };
 
-  const handleProfileUpdate: SubmitHandler<ProfileFormValues> = async (
-    data
-  ) => {
-    try {
-      await updateUserData(data);
-      setIsEditDialogOpen(false);
-      toast({
-        title: "Profile Forged!",
-        description: (
-          <div className="flex items-center">
-            <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-            <span>
-              Your GYM <BroText>BRO</BroText> stats are locked and loaded.
-            </span>
-          </div>
-        ),
-      });
-    } catch (error) {
-      console.error("Error in handleProfileUpdate:", error);
-      toast({
-        variant: "destructive",
-        title: "Update Failed",
-        description: "Failed to update profile. Please try again.",
-      });
-    }
+  const handleProfileUpdate: SubmitHandler<ProfileFormValues> = async (data) => {
+    await updateUserData(data);
+    setIsEditDialogOpen(false);
   };
-
-  if (!user) {
+  
+  if (isLoading || !user) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -751,16 +582,10 @@ export default function ProfileClient() {
   }
 
   const genderDisplayValue = user.gender
-    ? user.gender.charAt(0).toUpperCase() +
-      user.gender.slice(1).replace(/_/g, " ").replace("To Say", "to Say")
+    ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1)
     : undefined;
   const initials = user.name
-    ? user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
+    ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
     : "GB";
 
   const pageAnimationVariants = {
@@ -809,37 +634,27 @@ export default function ProfileClient() {
                 <AvatarImage 
                   src={user.avatarUrl || "/images/default-avatar.png"} 
                   alt={user.name} 
-                  onError={(e) => {
-                    console.log("Avatar image failed to load, using fallback");
-                    e.currentTarget.src = "/images/default-avatar.png";
-                  }}
+                  onError={(e) => { e.currentTarget.src = "/images/default-avatar.png"; }}
                 />
                 <AvatarFallback className="text-5xl bg-zinc-700 text-primary font-bold">
                   {initials}
                 </AvatarFallback>
               </Avatar>
-              <Dialog
-                open={isEditDialogOpen}
-                onOpenChange={setIsEditDialogOpen}
-              >
+              <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogTrigger asChild>
                   <Button
                     variant="outline"
                     size="icon"
                     className="absolute -bottom-2 -right-2 h-12 w-12 bg-zinc-800 border-2 border-primary/70 text-primary hover:bg-primary hover:text-primary-foreground rounded-full shadow-lg backdrop-blur-sm group"
                   >
-                    <Edit3
-                      size={20}
-                      className="group-hover:scale-110 transition-transform"
-                    />
+                    <Edit3 size={20} className="group-hover:scale-110 transition-transform" />
                     <span className="sr-only">Edit Profile</span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-lg w-[95vw] bg-zinc-900 border-zinc-700/80 text-white rounded-xl max-h-[90vh] flex flex-col shadow-2xl">
                   <DialogHeader className="px-6 pt-6 pb-4 border-b border-zinc-700/80">
                     <DialogTitle className="text-2xl font-bold text-white flex items-center">
-                      <Palette size={24} className="mr-3 text-primary" /> Refine
-                      Your <BroText>BRO</BroText> Stats
+                      <Palette size={24} className="mr-3 text-primary" /> Refine Your <BroText>BRO</BroText> Stats
                     </DialogTitle>
                     <DialogDescription className="text-gray-200">
                       Keep your profile sharp for peak AI guidance.
@@ -849,24 +664,11 @@ export default function ProfileClient() {
                     onSubmit={handleSubmit(handleProfileUpdate)}
                     className="space-y-5 overflow-y-auto flex-grow p-6 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-800"
                   >
-                    <FormFieldWrapper
-                      label="Profile Picture"
-                      id="avatarFile"
-                      error={errors.avatarFile?.message as string}
-                    >
+                    <FormFieldWrapper label="Profile Picture" id="avatarFile" error={errors.avatarFile?.message as string}>
                       <div className="flex items-center gap-4">
                         <Avatar className="h-24 w-24 border-2 border-zinc-700">
-                          <AvatarImage
-                            src={avatarPreview || user.avatarUrl || "/images/default-avatar.png"}
-                            alt="Avatar preview"
-                            onError={(e) => {
-                              console.log("Avatar preview failed to load, using fallback");
-                              e.currentTarget.src = "/images/default-avatar.png";
-                            }}
-                          />
-                          <AvatarFallback className="bg-zinc-800 text-primary text-2xl">
-                            {initials}
-                          </AvatarFallback>
+                          <AvatarImage src={avatarPreview || user.avatarUrl || "/images/default-avatar.png"} alt="Avatar preview" onError={(e) => { e.currentTarget.src = "/images/default-avatar.png"; }} />
+                          <AvatarFallback className="bg-zinc-800 text-primary text-2xl">{initials}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
                           <Input
@@ -878,40 +680,18 @@ export default function ProfileClient() {
                             className="bg-zinc-800 border-zinc-700 text-gray-200 file:text-primary file:font-medium file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-zinc-700 hover:file:bg-zinc-600 cursor-pointer"
                             ref={fileInputRef}
                           />
-                          <p className="text-xs text-gray-300 mt-1.5">
-                            Max {MAX_AVATAR_SIZE_MB}MB. JPG, PNG, WEBP, GIF.
-                          </p>
+                          <p className="text-xs text-gray-300 mt-1.5">Max {MAX_AVATAR_SIZE_MB}MB. JPG, PNG, WEBP, GIF.</p>
                         </div>
                       </div>
                     </FormFieldWrapper>
-                    <FormFieldWrapper
-                      label="Full Name"
-                      id="name"
-                      error={errors.name?.message}
-                    >
-                      <Input
-                        id="name"
-                        {...register("name")}
-                        className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-400"
-                      />
+                    <FormFieldWrapper label="Full Name" id="name" error={errors.name?.message}>
+                      <Input id="name" {...register("name")} className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-400" />
                     </FormFieldWrapper>
-                    <FormFieldWrapper
-                      label="Date of Birth"
-                      id="dob"
-                      error={errors.dateOfBirth?.message}
-                    >
-                      <Input
-                        id="dob"
-                        type="date"
-                        {...register("dateOfBirth")}
-                        className="bg-zinc-800 border-zinc-700 text-white [color-scheme:dark]"
-                      />
+                    <FormFieldWrapper label="Date of Birth" id="dob" error={errors.dateOfBirth?.message}>
+                      <Input id="dob" type="date" {...register("dateOfBirth")} className="bg-zinc-800 border-zinc-700 text-white [color-scheme:dark]" />
                     </FormFieldWrapper>
-                    <FormFieldWrapper
-                      label="Gender"
-                      id="gender-group"
-                      error={errors.gender?.message}
-                    >
+                    {/* --- GENDER SELECTION (NO CHANGE NEEDED HERE, PROBLEM WAS DATA FLOW) --- */}
+                    <FormFieldWrapper label="Gender" id="gender-group" error={errors.gender?.message}>
                       <Controller
                         control={control}
                         name="gender"
@@ -922,22 +702,14 @@ export default function ProfileClient() {
                             className="flex flex-wrap gap-x-6 gap-y-2 pt-1.5"
                           >
                             {GENDER_OPTIONS.map((option) => (
-                              <div
-                                className="flex items-center space-x-2"
-                                key={option}
-                              >
+                              <div className="flex items-center space-x-2" key={option}>
                                 <RadioGroupItem
                                   value={option}
                                   id={`gender-${option}`}
                                   className="border-2 border-sky-500 text-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:text-white hover:border-sky-400 transition-colors"
                                 />
-                                <Label
-                                  htmlFor={`gender-${option}`}
-                                  className="font-normal text-gray-300 capitalize cursor-pointer hover:text-sky-500 transition-colors"
-                                >
-                                  {option
-                                    .replace(/_/g, " ")
-                                    .replace("To Say", "to Say")}
+                                <Label htmlFor={`gender-${option}`} className="font-normal text-gray-300 capitalize cursor-pointer hover:text-sky-500 transition-colors">
+                                  {option}
                                 </Label>
                               </div>
                             ))}
@@ -946,193 +718,67 @@ export default function ProfileClient() {
                       />
                     </FormFieldWrapper>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
-                      <FormFieldWrapper
-                        label="Height (cm)"
-                        id="height"
-                        error={errors.heightCm?.message}
-                      >
-                        <Input
-                          id="height"
-                          type="number"
-                          {...register("heightCm")}
-                          min={MIN_HEIGHT_CM}
-                          max={MAX_HEIGHT_CM}
-                          className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-400"
-                        />
+                      <FormFieldWrapper label="Height (cm)" id="height" error={errors.heightCm?.message}>
+                        <Input id="height" type="number" {...register("heightCm")} min={MIN_HEIGHT_CM} max={MAX_HEIGHT_CM} className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-400" />
                       </FormFieldWrapper>
-                      <FormFieldWrapper
-                        label="Weight (kg)"
-                        id="weight"
-                        error={errors.currentWeightKg?.message}
-                      >
-                        <Input
-                          id="weight"
-                          type="number"
-                          step="0.1"
-                          {...register("currentWeightKg")}
-                          min={MIN_WEIGHT_KG}
-                          max={MAX_WEIGHT_KG}
-                          className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-400"
-                        />
+                      <FormFieldWrapper label="Weight (kg)" id="weight" error={errors.currentWeightKg?.message}>
+                        <Input id="weight" type="number" step="0.1" {...register("currentWeightKg")} min={MIN_WEIGHT_KG} max={MAX_WEIGHT_KG} className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-400" />
                       </FormFieldWrapper>
                     </div>
                     <Separator className="my-5 bg-zinc-700/60" />
-                    <h3 className="text-lg font-semibold text-white pt-1 flex items-center">
-                      Health Vitals{" "}
-                      <span className="text-sm text-gray-300 ml-2">
-                        (Optional)
-                      </span>
-                    </h3>
-                    <FormFieldWrapper
-                      label="Blood Pressure (e.g., 120/80)"
-                      id="bp"
-                      error={errors.bloodPressure?.message}
-                    >
-                      <Input
-                        id="bp"
-                        {...register("bloodPressure")}
-                        className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-400"
-                        placeholder="Systolic/Diastolic"
-                      />
+                    <h3 className="text-lg font-semibold text-white pt-1 flex items-center">Health Vitals <span className="text-sm text-gray-300 ml-2">(Optional)</span></h3>
+                    <FormFieldWrapper label="Blood Pressure (e.g., 120/80)" id="bp" error={errors.bloodPressure?.message}>
+                      <Input id="bp" {...register("bloodPressure")} className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-400" placeholder="Systolic/Diastolic" />
                     </FormFieldWrapper>
-                    <FormFieldWrapper
-                      label="Fasting Blood Glucose (e.g., 90)"
-                      id="glucose"
-                      error={errors.bloodGlucose?.message}
-                    >
-                      <Input
-                        id="glucose"
-                        {...register("bloodGlucose")}
-                        className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-400"
-                        placeholder="Value (mg/dL or mmol/L)"
-                      />
+                    <FormFieldWrapper label="Fasting Blood Glucose (e.g., 90)" id="glucose" error={errors.bloodGlucose?.message}>
+                      <Input id="glucose" {...register("bloodGlucose")} className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-400" placeholder="Value (mg/dL or mmol/L)" />
                     </FormFieldWrapper>
                   </form>
                   <DialogFooter className="p-6 pt-4 border-t border-zinc-700/80">
                     <DialogClose asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="border-zinc-600 hover:bg-zinc-700 text-zinc-700 hover:text-white"
-                      >
+                      <Button type="button" variant="outline" className="border-zinc-600 hover:bg-zinc-700 text-zinc-300 hover:text-white">
                         Cancel
                       </Button>
                     </DialogClose>
-                    <Button
-                      type="submit"
-                      onClick={handleSubmit(handleProfileUpdate)}
-                      disabled={
-                        isSubmitting || !Object.keys(dirtyFields).length
-                      }
-                      className="bg-zinc-800 hover:bg-zinc-700 text-white hover:text-white font-medium"
-                    >
-                      {isSubmitting && (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      )}
-                      {isSubmitting ? "Saving Profile..." : "Save Changes"}
+                    <Button type="submit" onClick={handleSubmit(handleProfileUpdate)} disabled={isSubmitting || !Object.keys(dirtyFields).length} className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium disabled:opacity-50">
+                      {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                      {isSubmitting ? "Saving..." : "Save Changes"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
             </motion.div>
-            <motion.div
-              variants={itemAnimationVariants}
-              className="flex-1 md:pl-6 text-center sm:text-left mt-12"
-            >
-              <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
-                {user.name}
-              </h1>
-              {user.email && (
-                <p className="text-sm text-gray-400 mt-2.5 tracking-wide">
-                  {user.email}
-                </p>
-              )}
+            <motion.div variants={itemAnimationVariants} className="flex-1 text-center md:text-left">
+              <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight">{user.name}</h1>
+              {user.email && <p className="text-sm text-gray-400 mt-2.5 tracking-wide">{user.email}</p>}
             </motion.div>
           </div>
         </motion.header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-x-8 gap-y-10 items-start">
-          <motion.div
-            variants={itemAnimationVariants}
-            className="lg:col-span-3 space-y-8"
-          >
+          <motion.div variants={itemAnimationVariants} className="lg:col-span-3 space-y-8">
             <Card className="bg-zinc-900 border-zinc-800 shadow-xl">
               <CardHeader>
-                <CardTitle className="text-2xl font-semibold text-primary flex items-center">
-                  <UserCircle size={26} className="mr-3" />
-                  Personal Vitals
-                </CardTitle>
+                <CardTitle className="text-2xl font-semibold text-primary flex items-center"><UserCircle size={26} className="mr-3" />Personal Vitals</CardTitle>
               </CardHeader>
               <CardContent className="divide-y divide-zinc-800 px-4 sm:px-6 pb-1">
-                <DetailItem
-                  icon={CalendarDays}
-                  label="Date of Birth"
-                  value={
-                    user.dateOfBirth
-                      ? new Date(user.dateOfBirth).toLocaleDateString("en-GB", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })
-                      : undefined
-                  }
-                />
-                <DetailItem
-                  icon={User}
-                  label="Age"
-                  value={user.age}
-                  unit={user.age ? "years" : undefined}
-                />
-                <DetailItem
-                  icon={VenetianMask}
-                  label="Gender"
-                  value={genderDisplayValue}
-                />
-                <DetailItem
-                  icon={Ruler}
-                  label="Height"
-                  value={user.heightCm}
-                  unit={user.heightCm ? "cm" : undefined}
-                />
-                <DetailItem
-                  icon={Weight}
-                  label="Weight"
-                  value={user.currentWeightKg}
-                  unit={user.currentWeightKg ? "kg" : undefined}
-                />
+                <DetailItem icon={CalendarDays} label="Date of Birth" value={user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString("en-GB", { year: "numeric", month: "long", day: "numeric" }) : undefined} />
+                <DetailItem icon={User} label="Age" value={user.age} unit={user.age ? "years" : undefined} />
+                <DetailItem icon={VenetianMask} label="Gender" value={genderDisplayValue} />
+                <DetailItem icon={Ruler} label="Height" value={user.heightCm} unit={user.heightCm ? "cm" : undefined} />
+                <DetailItem icon={Weight} label="Weight" value={user.currentWeightKg} unit={user.currentWeightKg ? "kg" : undefined} />
               </CardContent>
             </Card>
 
-            {(user.healthInfo?.bloodPressure ||
-              user.healthInfo?.bloodGlucose ||
-              user.healthInfo?.notes) && (
+            {(user.healthInfo?.bloodPressure || user.healthInfo?.bloodGlucose || user.healthInfo?.notes) && (
               <Card className="bg-zinc-900 border-zinc-800 shadow-xl">
                 <CardHeader>
-                  <CardTitle className="text-2xl font-semibold text-primary flex items-center">
-                    <HeartPulse size={26} className="mr-3" />
-                    Health Snapshot
-                  </CardTitle>
+                  <CardTitle className="text-2xl font-semibold text-primary flex items-center"><HeartPulse size={26} className="mr-3" />Health Snapshot</CardTitle>
                 </CardHeader>
                 <CardContent className="divide-y divide-zinc-800 px-4 sm:px-6 pb-1">
-                  <DetailItem
-                    icon={Heart}
-                    label="Blood Pressure"
-                    value={user.healthInfo.bloodPressure}
-                    unit="mmHg"
-                  />
-                  <DetailItem
-                    icon={Droplets}
-                    label="Fasting Glucose"
-                    value={user.healthInfo.bloodGlucose}
-                    unit="mg/dL"
-                  />
-                  {user.healthInfo.notes && (
-                    <DetailItem
-                      icon={Activity}
-                      label="Additional Notes"
-                      value={user.healthInfo.notes}
-                    />
-                  )}
+                  <DetailItem icon={Heart} label="Blood Pressure" value={user.healthInfo.bloodPressure} unit="mmHg" />
+                  <DetailItem icon={Droplets} label="Fasting Glucose" value={user.healthInfo.bloodGlucose} unit="mg/dL" />
+                  {user.healthInfo.notes && <DetailItem icon={Activity} label="Additional Notes" value={user.healthInfo.notes} />}
                 </CardContent>
               </Card>
             )}
