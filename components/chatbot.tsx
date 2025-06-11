@@ -5,11 +5,6 @@ import {
   MessageSquareText,
   X,
   Send,
-  BotIcon,
-  Image as ImageIcon,
-  File as FileIcon,
-  Paperclip,
-  Plus,
   Loader2,
   Sparkles,
   Bot,
@@ -25,17 +20,6 @@ interface Message {
   type: "user" | "bot";
   content: string;
   id: string;
-  attachments?: {
-    type: "image" | "file";
-    url: string;
-    name: string;
-  }[];
-}
-
-interface FileAttachment {
-  type: "image" | "file";
-  url: string;
-  name: string;
 }
 
 // Add translations
@@ -46,8 +30,6 @@ const translations = {
     title: "GYM BRO AI",
     subtitle: "Your Personal Fitness Assistant",
     placeholder: "Ask your GYM BRO AI...",
-    addImage: "Add Image",
-    addDocument: "Add Document",
     loading: "GYM BRO is crafting a response...",
     error:
       "Oops! Something went wrong, bro. Check your connection and try again!",
@@ -59,8 +41,6 @@ const translations = {
     title: "GYM BRO AI",
     subtitle: "Asisten Fitness Pribadi Kamu",
     placeholder: "Tanya ke GYM BRO AI...",
-    addImage: "Tambah Gambar",
-    addDocument: "Tambah Dokumen",
     loading: "GYM BRO sedang menyiapkan jawaban...",
     error: "Ups! Terjadi kesalahan. Periksa koneksi kamu dan coba lagi!",
     processingError:
@@ -84,12 +64,8 @@ export default function Chatbot() {
   ]);
   const [input, setInput] = useState("");
   const [isLoadingResponse, setIsLoadingResponse] = useState(false);
-  const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     requestAnimationFrame(() => {
@@ -103,16 +79,6 @@ export default function Chatbot() {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [messages, isOpen]);
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    setSelectedFiles((prev) => [...prev, ...files]);
-    setIsAttachmentMenuOpen(false);
-  };
-
-  const removeFile = (index: number) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-  };
 
   // Add language toggle
   const toggleLanguage = () => {
@@ -130,42 +96,28 @@ export default function Chatbot() {
   };
 
   const handleSend = async () => {
-    if (!input.trim() && selectedFiles.length === 0) return;
+    if (!input.trim()) return;
     setIsLoadingResponse(true);
-    setIsUploading(true);
 
     try {
-      // Simulasi upload file (ganti dengan implementasi upload file yang sebenarnya)
-      const uploadedAttachments: FileAttachment[] = await Promise.all(
-        selectedFiles.map(async (file) => ({
-          type: file.type.startsWith("image/") ? "image" : ("file" as const),
-          url: URL.createObjectURL(file),
-          name: file.name,
-        }))
-      );
-
       const newUserMessage: Message = {
         type: "user",
         content: input,
         id: crypto.randomUUID(),
-        attachments: uploadedAttachments,
       };
 
       setMessages((prev) => [...prev, newUserMessage]);
       const currentInput = input;
       setInput("");
-      setSelectedFiles([]);
 
-      // Existing API call logic...
-      const response = await fetch("/api/chat", {
+      // Call API chatbot
+      const response = await fetch("/api/chatbot", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           message: currentInput,
-          conversationHistory: messages.slice(-5),
-          language: language, // Send language preference to API
         }),
       });
 
@@ -177,7 +129,7 @@ export default function Chatbot() {
 
       const botResponse: Message = {
         type: "bot",
-        content: data.message || t.processingError,
+        content: data.data || t.processingError,
         id: crypto.randomUUID(),
       };
 
@@ -192,7 +144,6 @@ export default function Chatbot() {
       setMessages((prev) => [...prev, errorResponse]);
     } finally {
       setIsLoadingResponse(false);
-      setIsUploading(false);
     }
   };
 
@@ -312,47 +263,6 @@ export default function Chatbot() {
                       message.type === "user" ? "items-end" : "items-start"
                     )}
                   >
-                    {message.attachments?.map((attachment, index) => (
-                      <div
-                        key={index}
-                        className={cn(
-                          "rounded-xl overflow-hidden border shadow-lg will-change-transform",
-                          message.type === "user"
-                            ? "bg-gradient-to-br from-indigo-500 to-purple-600 border-indigo-400/20"
-                            : "bg-zinc-800/90 border-zinc-700/50"
-                        )}
-                      >
-                        {attachment.type === "image" ? (
-                          <div className="relative aspect-video w-48 h-32 group">
-                            <img
-                              src={attachment.url}
-                              alt={attachment.name}
-                              className="object-cover w-full h-full rounded-xl transition-transform duration-200 will-change-transform group-hover:scale-105"
-                              loading="lazy"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                              <span className="absolute bottom-2 left-2 text-xs text-white truncate">
-                                {attachment.name}
-                              </span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="p-2.5 flex items-center gap-2 text-sm group hover:bg-zinc-700/20 transition-colors duration-200">
-                            <FileIcon
-                              size={16}
-                              className={
-                                message.type === "user"
-                                  ? "text-white"
-                                  : "text-indigo-400"
-                              }
-                            />
-                            <span className="truncate group-hover:text-white transition-colors">
-                              {attachment.name}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
                     {message.content && (
                       <div
                         className={cn(
@@ -397,34 +307,6 @@ export default function Chatbot() {
               <div ref={messagesEndRef} />
             </div>
 
-            {selectedFiles.length > 0 && (
-              <div className="p-3 border-t border-zinc-800/50 bg-gradient-to-b from-zinc-900 to-zinc-800">
-                <div className="flex gap-2 overflow-x-auto p-2 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-800">
-                  {selectedFiles.map((file, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-2 bg-zinc-800/80 hover:bg-zinc-700/80 p-2.5 rounded-xl text-sm text-gray-200 border border-zinc-700/50 transition-all duration-200 group shadow-lg"
-                    >
-                      {file.type.startsWith("image/") ? (
-                        <ImageIcon size={14} className="text-indigo-400" />
-                      ) : (
-                        <FileIcon size={14} className="text-purple-400" />
-                      )}
-                      <span className="truncate max-w-[120px] group-hover:text-white transition-colors">
-                        {file.name}
-                      </span>
-                      <button
-                        onClick={() => removeFile(index)}
-                        className="text-gray-400 hover:text-white hover:bg-zinc-600/50 p-1 rounded-lg transition-all duration-200"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             <footer className="p-4 border-t border-zinc-800/50 bg-gradient-to-b from-zinc-900 to-zinc-800">
               <form
                 onSubmit={(e) => {
@@ -442,71 +324,13 @@ export default function Chatbot() {
                     className="pr-10 bg-zinc-800/80 border-zinc-700/50 text-white placeholder-gray-400 focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200 rounded-xl"
                     aria-label="Chat input"
                   />
-                  <div className="absolute right-2 bottom-2">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 text-gray-400 hover:text-indigo-400 transition-colors duration-200"
-                      onClick={() =>
-                        setIsAttachmentMenuOpen(!isAttachmentMenuOpen)
-                      }
-                    >
-                      <Paperclip size={16} className="transform rotate-45" />
-                    </Button>
-                    {isAttachmentMenuOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.1 }}
-                        className="absolute bottom-full right-0 mb-2 p-3 bg-zinc-800/90 backdrop-blur-sm rounded-xl shadow-xl border border-zinc-700/50 flex flex-col gap-2 min-w-[180px]"
-                      >
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          onChange={handleFileSelect}
-                          multiple
-                          accept="image/*,.pdf,.doc,.docx,.txt"
-                          className="hidden"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="w-full flex items-center gap-2 text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-indigo-500/20 hover:to-purple-600/20 transition-all duration-200 rounded-lg group"
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <ImageIcon
-                            size={16}
-                            className="text-indigo-400 group-hover:scale-110 transition-transform"
-                          />
-                          <span className="text-sm">{t.addImage}</span>
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="w-full flex items-center gap-2 text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-indigo-500/20 hover:to-purple-600/20 transition-all duration-200 rounded-lg group"
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <FileIcon
-                            size={16}
-                            className="text-purple-400 group-hover:scale-110 transition-transform"
-                          />
-                          <span className="text-sm">{t.addDocument}</span>
-                        </Button>
-                      </motion.div>
-                    )}
-                  </div>
                 </div>
                 <Button
                   type="submit"
                   className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 px-4 h-10 shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-indigo-500 disabled:hover:to-purple-600 rounded-xl group"
-                  disabled={
-                    (!input.trim() && selectedFiles.length === 0) ||
-                    isLoadingResponse
-                  }
+                  disabled={!input.trim() || isLoadingResponse}
                 >
-                  {isUploading ? (
+                  {isLoadingResponse ? (
                     <Loader2 size={18} className="animate-spin" />
                   ) : (
                     <Send
