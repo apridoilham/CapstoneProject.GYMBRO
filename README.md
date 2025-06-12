@@ -25,7 +25,7 @@ A Next.js-based website with health and food analysis features including:
 
 ### 2. Clone Repository
 ```bash
-git clone https://github.com/username/repo.git
+git clone https://github.com/apridoilham/CapstoneProject.GYMBRO.git
 cd project-directory
 ```
 
