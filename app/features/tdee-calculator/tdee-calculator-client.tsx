@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,7 +29,7 @@ import {
   Loader2,
   ArrowLeft,
   HomeIcon,
-} from "lucide-react"; // Tambahkan HomeIcon
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -115,7 +115,8 @@ export default function TdeeCalculatorClient() {
           ...prev,
           weight: profile.currentWeightKg || prev.weight,
           height: profile.heightCm || prev.height,
-          gender: profile.gender || prev.gender,
+          gender: profile.gender === 'female' ? 'female' : 'male',
+          age: profile.age || prev.age,
           targetWeight: profile.currentWeightKg || prev.targetWeight,
         }));
       } catch (e) {
@@ -131,30 +132,24 @@ export default function TdeeCalculatorClient() {
   };
 
   const handleUnitSystemChange = (value: UnitSystem) => {
+    if (value === inputs.unitSystem) return;
+
     const newWeight =
-      inputs.unitSystem === "metric" && value === "imperial"
+      value === "imperial"
         ? parseFloat((inputs.weight * 2.20462).toFixed(1))
-        : inputs.unitSystem === "imperial" && value === "metric"
-        ? parseFloat((inputs.weight / 2.20462).toFixed(1))
-        : inputs.weight;
+        : parseFloat((inputs.weight / 2.20462).toFixed(1));
 
     const newHeight =
-      inputs.unitSystem === "metric" && value === "imperial"
+      value === "imperial"
         ? parseFloat((inputs.height / 2.54).toFixed(1))
-        : inputs.unitSystem === "imperial" && value === "metric"
-        ? parseFloat((inputs.height * 2.54).toFixed(1))
-        : inputs.height;
+        : parseFloat((inputs.height * 2.54).toFixed(1));
 
     const newTargetWeight =
-      inputs.targetWeight &&
-      inputs.unitSystem === "metric" &&
-      value === "imperial"
-        ? parseFloat((inputs.targetWeight * 2.20462).toFixed(1))
-        : inputs.targetWeight &&
-          inputs.unitSystem === "imperial" &&
-          value === "metric"
-        ? parseFloat((inputs.targetWeight / 2.20462).toFixed(1))
-        : inputs.targetWeight;
+      inputs.targetWeight
+        ? value === "imperial"
+          ? parseFloat((inputs.targetWeight * 2.20462).toFixed(1))
+          : parseFloat((inputs.targetWeight / 2.20462).toFixed(1))
+        : undefined;
 
     setInputs((prev) => ({
       ...prev,
@@ -176,6 +171,12 @@ export default function TdeeCalculatorClient() {
         : inputs.weight;
     const heightInCm =
       inputs.unitSystem === "imperial" ? inputs.height * 2.54 : inputs.height;
+    
+    const targetWeightInKg = inputs.targetWeight ?
+      inputs.unitSystem === "imperial"
+        ? inputs.targetWeight / 2.20462
+        : inputs.targetWeight
+      : 0;
 
     if (weightInKg <= 0 || heightInCm <= 0 || inputs.age <= 0) {
       toast({
@@ -204,23 +205,23 @@ export default function TdeeCalculatorClient() {
     if (inputs.goal !== "maintenance" && tdee) {
       if (
         inputs.goal.includes("Loss") &&
-        inputs.targetWeight &&
-        inputs.targetWeight < weightInKg &&
+        targetWeightInKg &&
+        targetWeightInKg < weightInKg &&
         inputs.weeksToTarget &&
         inputs.weeksToTarget > 0
       ) {
-        const weightToLoseKg = weightInKg - inputs.targetWeight;
+        const weightToLoseKg = weightInKg - targetWeightInKg;
         const totalDeficitNeeded = weightToLoseKg * 7700;
         const dailyDeficit = totalDeficitNeeded / (inputs.weeksToTarget * 7);
         goalCalories = Math.round(tdee - dailyDeficit);
       } else if (
         inputs.goal.includes("Gain") &&
-        inputs.targetWeight &&
-        inputs.targetWeight > weightInKg &&
+        targetWeightInKg &&
+        targetWeightInKg > weightInKg &&
         inputs.weeksToTarget &&
         inputs.weeksToTarget > 0
       ) {
-        const weightToGainKg = inputs.targetWeight - weightInKg;
+        const weightToGainKg = targetWeightInKg - weightInKg;
         const totalSurplusNeeded = weightToGainKg * 7700;
         const dailySurplus = totalSurplusNeeded / (inputs.weeksToTarget * 7);
         goalCalories = Math.round(tdee + dailySurplus);
@@ -267,7 +268,7 @@ export default function TdeeCalculatorClient() {
   if (!profileDataLoaded) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <Loader2 className="h-12 w-12 animate-spin text-white" />
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
         <p className="ml-4 text-lg">Loading Profile Data...</p>
       </div>
     );
@@ -285,7 +286,7 @@ export default function TdeeCalculatorClient() {
           <div className="mb-8 md:mb-10">
             <Link
               href="/"
-              className="inline-flex items-center text-white hover:text-white/80 group text-sm font-medium transition-colors"
+              className="inline-flex items-center text-primary hover:text-primary/80 group text-sm font-medium transition-colors"
             >
               <HomeIcon
                 size={16}
@@ -295,7 +296,7 @@ export default function TdeeCalculatorClient() {
             </Link>
           </div>
           <header className="text-center mb-10 md:mb-12">
-            <Utensils size={52} className="mx-auto mb-5 text-white" />
+            <Utensils size={52} className="mx-auto mb-5 text-primary" />
             <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight">
               Calorie & <span className="text-sky-500">TDEE</span> Planner
             </h1>
@@ -308,182 +309,79 @@ export default function TdeeCalculatorClient() {
           <Card className="bg-zinc-900/70 border-zinc-700/60 shadow-2xl backdrop-blur-sm rounded-xl">
             <CardHeader className="pb-5">
               <CardTitle className="text-2xl text-white flex items-center">
-                <Dumbbell size={24} className="mr-3 text-white" />
+                <Dumbbell size={24} className="mr-3 text-primary" />
                 Your Stats
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6 pt-2">
-              <div className="flex justify-end">
-                <RadioGroup
-                  defaultValue="metric"
-                  onValueChange={(value) =>
-                    handleUnitSystemChange(value as UnitSystem)
-                  }
-                  value={inputs.unitSystem}
-                  className="flex"
-                >
-                  <div className="flex items-center space-x-1">
-                    <RadioGroupItem
-                      value="imperial"
-                      id="imperial-tdee"
-                      className="h-3.5 w-3.5 border-gray-500 data-[state=checked]:border-white data-[state=checked]:text-white"
-                    />
-                    <Label
-                      htmlFor="imperial-tdee"
-                      className="text-xs text-gray-400 cursor-pointer"
-                    >
-                      lb, ft
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-2">
+                    <Label className="text-sm font-medium text-gray-300 mb-2 block">
+                        Gender
                     </Label>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <RadioGroupItem
-                      value="metric"
-                      id="metric-tdee"
-                      className="h-3.5 w-3.5 border-gray-500 data-[state=checked]:border-white data-[state=checked]:text-white"
-                    />
-                    <Label
-                      htmlFor="metric-tdee"
-                      className="text-xs text-gray-400 cursor-pointer"
+                    <RadioGroup
+                        value={inputs.gender}
+                        onValueChange={(value) => handleInputChange("gender", value as Gender)}
+                        className="flex space-x-4 pt-1"
                     >
-                      kg, cm
+                        <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="male" id="male-tdee" className="border-primary text-primary" />
+                        <Label htmlFor="male-tdee" className="font-normal text-gray-200 cursor-pointer">Male</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="female" id="female-tdee" className="border-primary text-primary" />
+                        <Label htmlFor="female-tdee" className="font-normal text-gray-200 cursor-pointer">Female</Label>
+                        </div>
+                    </RadioGroup>
+                </div>
+                <div>
+                    <Label className="text-sm font-medium text-gray-300 mb-2 block">
+                        Unit System
                     </Label>
-                  </div>
-                </RadioGroup>
+                    <RadioGroup
+                        onValueChange={(value) => handleUnitSystemChange(value as UnitSystem)}
+                        value={inputs.unitSystem}
+                        className="flex space-x-4 pt-1"
+                    >
+                        <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="metric" id="metric-tdee" className="border-primary text-primary"/>
+                        <Label htmlFor="metric-tdee" className="font-normal text-gray-200 cursor-pointer">kg, cm</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="imperial" id="imperial-tdee" className="border-primary text-primary"/>
+                        <Label htmlFor="imperial-tdee" className="font-normal text-gray-200 cursor-pointer">lb, in</Label>
+                        </div>
+                    </RadioGroup>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <Label
-                    htmlFor="weight"
-                    className="text-sm font-medium text-gray-300"
-                  >
-                    Current Weight ({weightUnit})
-                  </Label>
-                  <Input
-                    id="weight"
-                    type="number"
-                    value={inputs.weight}
-                    onChange={(e) =>
-                      handleInputChange(
-                        "weight",
-                        parseFloat(e.target.value) || 0
-                      )
-                    }
-                    className="mt-1 bg-white border-zinc-700"
-                  />
+                  <Label htmlFor="weight" className="text-sm font-medium text-gray-300">Current Weight ({weightUnit})</Label>
+                  <Input id="weight" type="number" value={inputs.weight} onChange={(e) => handleInputChange("weight", parseFloat(e.target.value) || 0)} className="mt-1.5 bg-zinc-800 border-zinc-700 text-white focus:ring-primary"/>
                 </div>
                 <div>
-                  <Label
-                    htmlFor="height"
-                    className="text-sm font-medium text-gray-300"
-                  >
-                    Height ({heightUnit})
-                  </Label>
-                  <Input
-                    id="height"
-                    type="number"
-                    value={inputs.height}
-                    onChange={(e) =>
-                      handleInputChange(
-                        "height",
-                        parseFloat(e.target.value) || 0
-                      )
-                    }
-                    className="mt-1 bg-white border-zinc-700"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label
-                    htmlFor="age"
-                    className="text-sm font-medium text-gray-300"
-                  >
-                    Age (years)
-                  </Label>
-                  <Input
-                    id="age"
-                    type="number"
-                    value={inputs.age}
-                    onChange={(e) =>
-                      handleInputChange("age", parseInt(e.target.value) || 0)
-                    }
-                    className="mt-1 bg-white border-zinc-700"
-                  />
+                  <Label htmlFor="height" className="text-sm font-medium text-gray-300">Height ({heightUnit})</Label>
+                  <Input id="height" type="number" value={inputs.height} onChange={(e) => handleInputChange("height", parseFloat(e.target.value) || 0)} className="mt-1.5 bg-zinc-800 border-zinc-700 text-white focus:ring-primary"/>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-300 mb-1.5 block">
-                    Select your gender
-                  </Label>
-                  <RadioGroup
-                    value={inputs.gender}
-                    onValueChange={(value) =>
-                      handleInputChange("gender", value as Gender)
-                    }
-                    className="flex space-x-4"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem
-                        value="male"
-                        id="male-tdee"
-                        className="border-white text-white"
-                      />
-                      <Label
-                        htmlFor="male-tdee"
-                        className="font-normal text-gray-200 cursor-pointer"
-                      >
-                        Male
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem
-                        value="female"
-                        id="female-tdee"
-                        className="border-white text-white"
-                      />
-                      <Label
-                        htmlFor="female-tdee"
-                        className="font-normal text-gray-200 cursor-pointer"
-                      >
-                        Female
-                      </Label>
-                    </div>
-                  </RadioGroup>
+                  <Label htmlFor="age" className="text-sm font-medium text-gray-300">Age (years)</Label>
+                  <Input id="age" type="number" value={inputs.age} onChange={(e) => handleInputChange("age", parseInt(e.target.value) || 0)} className="mt-1.5 bg-zinc-800 border-zinc-700 text-white focus:ring-primary"/>
                 </div>
               </div>
 
               <div>
-                <Label
-                  htmlFor="activityLevel"
-                  className="text-sm font-medium text-gray-300"
-                >
-                  Activity Level (Optional for BMR)
-                </Label>
-                <Select
-                  value={inputs.activityLevel}
-                  onValueChange={(value) =>
-                    handleInputChange("activityLevel", value as ActivityLevel)
-                  }
-                >
-                  <SelectTrigger className="w-full mt-1 bg-white border-zinc-700">
+                <Label htmlFor="activityLevel" className="text-sm font-medium text-gray-300">Activity Level</Label>
+                <Select value={inputs.activityLevel} onValueChange={(value) => handleInputChange("activityLevel", value as ActivityLevel)}>
+                  <SelectTrigger className="w-full mt-1.5 bg-zinc-800 border-zinc-700 text-white focus:ring-primary">
                     <SelectValue placeholder="Select activity level" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border-zinc-700 text-gray-800">
-                    <SelectItem value="sedentary">
-                      Sedentary (office job, minimal physical activity)
-                    </SelectItem>
-                    <SelectItem value="light">
-                      Light activity (training 1-2 times per week)
-                    </SelectItem>
-                    <SelectItem value="moderate">
-                      Moderate activity (training 3-5 times per week)
-                    </SelectItem>
-                    <SelectItem value="active">
-                      Active (training 6-7 times per week)
-                    </SelectItem>
-                    <SelectItem value="veryActive">
-                      Very Active (intense training daily, or physical job)
-                    </SelectItem>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                    <SelectItem value="sedentary">Sedentary (office job, little exercise)</SelectItem>
+                    <SelectItem value="light">Light (training 1-2 times/week)</SelectItem>
+                    <SelectItem value="moderate">Moderate (training 3-5 times/week)</SelectItem>
+                    <SelectItem value="active">Active (training 6-7 times/week)</SelectItem>
+                    <SelectItem value="veryActive">Very Active (intense daily training or physical job)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -491,97 +389,36 @@ export default function TdeeCalculatorClient() {
               <Separator className="my-6 bg-zinc-700/60" />
 
               <div>
-                <Label
-                  htmlFor="goal"
-                  className="text-sm font-medium text-gray-300"
-                >
-                  Your Goal
-                </Label>
-                <Select
-                  value={inputs.goal}
-                  onValueChange={(value) =>
-                    handleInputChange("goal", value as Goal)
-                  }
-                >
-                  <SelectTrigger className="w-full mt-1 bg-white border-zinc-700">
-                    <SelectValue placeholder="Select your white goal" />
+                <Label htmlFor="goal" className="text-sm font-medium text-gray-300">Your Goal</Label>
+                <Select value={inputs.goal} onValueChange={(value) => handleInputChange("goal", value as Goal)}>
+                  <SelectTrigger className="w-full mt-1.5 bg-zinc-800 border-zinc-700 text-white focus:ring-primary">
+                    <SelectValue placeholder="Select your weight goal" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border-zinc-700 text-white">
-                    <SelectItem value="maintenance">
-                      Weight Maintenance
-                    </SelectItem>
-                    <SelectItem value="mildLoss">
-                      Mild Weight Loss (~0.25 {weightUnit}/week)
-                    </SelectItem>
-                    <SelectItem value="weightLoss">
-                      Weight Loss (~0.5 {weightUnit}/week)
-                    </SelectItem>
-                    <SelectItem value="extremeLoss">
-                      Extreme Weight Loss (~0.75 {weightUnit}/week) - Use with
-                      caution
-                    </SelectItem>
-                    <SelectItem value="mildGain">
-                      Mild Weight Gain (~0.25 {weightUnit}/week)
-                    </SelectItem>
-                    <SelectItem value="weightGain">
-                      Weight Gain (~0.5 {weightUnit}/week)
-                    </SelectItem>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                    <SelectItem value="maintenance">Weight Maintenance</SelectItem>
+                    <SelectItem value="mildLoss">Mild Weight Loss (~0.25 {weightUnit}/week)</SelectItem>
+                    <SelectItem value="weightLoss">Weight Loss (~0.5 {weightUnit}/week)</SelectItem>
+                    <SelectItem value="extremeLoss">Extreme Weight Loss (~0.75 {weightUnit}/week)</SelectItem>
+                    <SelectItem value="mildGain">Mild Weight Gain (~0.25 {weightUnit}/week)</SelectItem>
+                    <SelectItem value="weightGain">Weight Gain (~0.5 {weightUnit}/week)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {(inputs.goal.includes("Loss") ||
-                inputs.goal.includes("Gain")) && (
+              {(inputs.goal.includes("Loss") || inputs.goal.includes("Gain")) && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label
-                      htmlFor="targetWeight"
-                      className="text-sm font-medium text-gray-300"
-                    >
-                      Target Weight ({weightUnit})
-                    </Label>
-                    <Input
-                      id="targetWeight"
-                      type="number"
-                      value={inputs.targetWeight || ""}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "targetWeight",
-                          parseFloat(e.target.value) || undefined
-                        )
-                      }
-                      className="mt-1 bg-white border-zinc-700"
-                    />
+                    <Label htmlFor="targetWeight" className="text-sm font-medium text-gray-300">Target Weight ({weightUnit})</Label>
+                    <Input id="targetWeight" type="number" value={inputs.targetWeight || ""} onChange={(e) => handleInputChange("targetWeight", parseFloat(e.target.value) || undefined)} className="mt-1.5 bg-zinc-800 border-zinc-700 text-white focus:ring-primary"/>
                   </div>
                   <div>
-                    <Label
-                      htmlFor="weeksToTarget"
-                      className="text-sm font-medium text-gray-300"
-                    >
-                      Weeks to Target
-                    </Label>
-                    <Input
-                      id="weeksToTarget"
-                      type="number"
-                      value={inputs.weeksToTarget || ""}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "weeksToTarget",
-                          parseInt(e.target.value) || undefined
-                        )
-                      }
-                      min="1"
-                      className="mt-1 bg-white border-zinc-700"
-                    />
+                    <Label htmlFor="weeksToTarget" className="text-sm font-medium text-gray-300">Weeks to Target</Label>
+                    <Input id="weeksToTarget" type="number" value={inputs.weeksToTarget || ""} onChange={(e) => handleInputChange("weeksToTarget", parseInt(e.target.value) || undefined)} min="1" className="mt-1.5 bg-zinc-800 border-zinc-700 text-white focus:ring-primary"/>
                   </div>
                 </div>
               )}
 
-              <Button
-                onClick={calculateTdee}
-                disabled={isCalculating}
-                className="w-full bg-white text-gray-800 hover:bg-white/90 font-bold py-3.5 text-lg mt-6 h-14"
-              >
+              <Button onClick={calculateTdee} disabled={isCalculating} className="w-full bg-gradient-to-r from-primary via-primary/90 to-primary/80 text-primary-foreground hover:opacity-90 font-bold py-3.5 text-lg mt-6 h-14 shadow-lg shadow-primary/40">
                 {isCalculating ? (
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 ) : (
@@ -594,123 +431,68 @@ export default function TdeeCalculatorClient() {
 
           <AnimatePresence>
             {isCalculating && !result && (
-              <motion.div
-                key="calculating-indicator"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex flex-col items-center justify-center p-6 bg-zinc-900/80 border-zinc-700/70 rounded-xl shadow-xl text-center w-full mt-8 min-h-[200px]"
-              >
-                <Loader2 size={36} className="text-white animate-spin mb-4" />
-                <p className="text-lg font-semibold text-white">
-                  Calculating your optimal intake, Bro...
-                </p>
+              <motion.div key="calculating-indicator" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center p-6 bg-zinc-900/80 border-zinc-700/70 rounded-xl shadow-xl text-center w-full mt-8 min-h-[200px]">
+                <Loader2 size={36} className="text-primary animate-spin mb-4" />
+                <p className="text-lg font-semibold text-white">Calculating your optimal intake, Bro...</p>
               </motion.div>
             )}
             {result && !isCalculating && (
-              <motion.div
-                key="tdee-result-card"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-                className="w-full mt-8"
-              >
+              <motion.div key="tdee-result-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: "easeOut" }} className="w-full mt-8">
                 <Card className="bg-zinc-900/80 border-zinc-700/70 shadow-2xl text-center backdrop-blur-sm rounded-xl">
                   <CardHeader className="pb-4 pt-6">
                     <CardTitle className="text-xl md:text-2xl text-white flex items-center justify-center gap-2">
-                      <TargetIcon size={24} />
+                      <TargetIcon size={24} className="text-primary"/>
                       Your Estimated Needs
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-5 pb-6 px-5">
                     <div className="py-3">
-                      <p className="text-sm text-gray-400 mb-1">
-                        Basal Metabolic Rate (BMR)
-                      </p>
-                      <p className="text-3xl font-bold text-white">
-                        {result.bmr} kcal/day
-                      </p>
+                      <p className="text-sm text-gray-400 mb-1">Basal Metabolic Rate (BMR)</p>
+                      <p className="text-3xl font-bold text-white">{result.bmr} kcal/day</p>
                     </div>
                     {result.tdee && (
                       <div className="py-3 border-t border-b border-zinc-700/50">
-                        <p className="text-sm text-gray-400 mb-1">
-                          Total Daily Energy Expenditure (TDEE)
-                        </p>
-                        <p className="text-4xl font-extrabold text-white">
-                          {result.tdee} kcal/day
-                        </p>
+                        <p className="text-sm text-gray-400 mb-1">Total Daily Energy Expenditure (TDEE)</p>
+                        <p className="text-4xl font-extrabold text-sky-500">{result.tdee} kcal/day</p>
                         <p className="text-xs text-gray-500">
-                          (
-                          {inputs.activityLevel
-                            ? inputs.activityLevel
-                                .replace(/([A-Z])/g, " $1")
-                                .replace(/^./, (str) => str.toUpperCase())
-                            : "Activity not specified"}
-                          )
+                          ({inputs.activityLevel ? inputs.activityLevel.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase()) : "Activity not specified"})
                         </p>
                       </div>
                     )}
                     {result.goalCalories && (
                       <div className="py-3">
                         <p className="text-sm text-gray-400 mb-1">
-                          Target Daily Calories for{" "}
-                          <span className="font-semibold text-gray-300">
-                            {inputs.goal
-                              .replace(/([A-Z])/g, " $1")
-                              .replace(/^./, (str) => str.toUpperCase())}
-                          </span>
+                          Target Calories for{" "}
+                          <span className="font-semibold text-gray-300">{inputs.goal.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}</span>
                         </p>
-                        <p className="text-5xl font-extrabold text-white">
-                          {result.goalCalories} kcal/day
-                        </p>
+                        <p className="text-5xl font-extrabold text-white">{result.goalCalories} kcal/day</p>
                       </div>
                     )}
 
-                    {result.protein &&
-                      result.fat &&
-                      result.carbs &&
-                      result.goalCalories && (
+                    {result.protein && result.fat && result.carbs && result.goalCalories && (
                         <div className="pt-4 space-y-3 text-sm text-left">
-                          <p className="text-center text-md font-semibold text-gray-300 pb-1">
-                            Suggested Macronutrient Ranges:
-                          </p>
+                          <p className="text-center text-md font-semibold text-gray-300 pb-1">Suggested Macronutrient Ranges:</p>
                           <div className="grid grid-cols-3 gap-3 text-center">
                             <div>
                               <p className="font-medium text-white">Protein</p>
-                              <p className="text-gray-200">
-                                {result.protein.min} - {result.protein.max}g
-                              </p>
+                              <p className="text-gray-200">{result.protein.min} - {result.protein.max}g</p>
                             </div>
                             <div>
                               <p className="font-medium text-white">Fat</p>
-                              <p className="text-gray-200">
-                                {result.fat.min} - {result.fat.max}g
-                              </p>
+                              <p className="text-gray-200">{result.fat.min} - {result.fat.max}g</p>
                             </div>
                             <div>
                               <p className="font-medium text-white">Carbs</p>
-                              <p className="text-gray-200">
-                                {result.carbs.min} - {result.carbs.max}g
-                              </p>
+                              <p className="text-gray-200">{result.carbs.min} - {result.carbs.max}g</p>
                             </div>
                           </div>
                         </div>
-                      )}
+                    )}
 
                     <Separator className="bg-zinc-700/60 my-5" />
                     <div className="text-xs text-gray-500 flex items-start gap-2 p-3 bg-black/20 rounded-md border border-zinc-700/40">
-                      <InfoIcon
-                        size={28}
-                        className="text-gray-500 flex-shrink-0 mt-0.5"
-                      />
-                      <span>
-                        This tool provides estimates for informational purposes.
-                        It does not qualify as medical or nutritional advice.
-                        Consult with a healthcare professional or registered
-                        dietitian before making significant changes to your diet
-                        or exercise plan. True fitness optimization considers
-                        many individual factors.
-                      </span>
+                      <InfoIcon size={28} className="text-gray-500 flex-shrink-0 mt-0.5"/>
+                      <span>This tool provides estimates. Consult with a healthcare professional before making significant changes to your diet or exercise plan. True fitness optimization considers many individual factors.</span>
                     </div>
                   </CardContent>
                 </Card>
