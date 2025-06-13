@@ -30,7 +30,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
+import { Loader2, HomeIcon, Dumbbell, Sparkles, ClipboardCheck } from "lucide-react";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 
 const formSchema = z.object({
   sex: z.enum(["Laki-laki", "Perempuan"]),
@@ -51,6 +53,7 @@ export default function ExerciseEquipmentClient() {
   } | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -67,9 +70,15 @@ export default function ExerciseEquipmentClient() {
   useEffect(() => {
     const token = localStorage.getItem("tokenGYMBRO");
     const storedProfile = localStorage.getItem('gymBroUserProfile');
-    const profile = storedProfile ? JSON.parse(storedProfile) : null;
+    
+    if (!token || !storedProfile) {
+      setIsDataLoaded(true);
+      return;
+    }
+    
+    const profile = JSON.parse(storedProfile);
+
     const getInitData = async () => {
-      setIsLoading(true);
       try {
         const res = await axios.get(`${location.origin}/api/user/${profile.email}`, {
           headers: {
@@ -77,91 +86,41 @@ export default function ExerciseEquipmentClient() {
             "Content-Type": "application/json",
           },
         });
+
+        const userData = res.data.data;
+        let genderToSet: "Laki-laki" | "Perempuan" = "Laki-laki";
+        if (userData.gender === "female" || userData.gender === "Perempuan") {
+          genderToSet = "Perempuan";
+        }
+
         form.reset({
-          sex: res.data.data.gender || "Laki-laki",
-          age: res.data.data.age || 25,
-          height: res.data.data.height ? res.data.data.height / 100 : 1.75,
-          weight: res.data.data.weight || 70,
-          hypertension: res.data.data.isHypertension || "No",
-          diabetes: res.data.data.isDiabetes || "No",
+          sex: genderToSet,
+          age: userData.age || 25,
+          height: userData.height ? parseFloat((userData.height / 100).toFixed(2)) : 1.75,
+          weight: userData.weight || 70,
+          hypertension: userData.isHypertension ? "Yes" : "No",
+          diabetes: userData.isDiabetes ? "Yes" : "No",
         });
-        setIsLoading(false);
       } catch (err) {
-        console.error("User unauthorized");
-        setIsLoading(false);
+        console.error("User unauthorized or error fetching data", err);
+      } finally {
+        setIsDataLoaded(true);
       }
     }
-    if (token) getInitData();
+    
+    getInitData();
   }, [form]);
 
-  const calculateBMI = (height: number, weight: number): number => {
-    return weight / (height * height);
-  };
-
-  const getFitnessGoal = (bmi: number): string => {
-    if (bmi < 18.5) return "Weight Gain";
-    if (bmi >= 18.5 && bmi < 25) return "Maintain Weight";
-    return "Weight Loss";
-  };
-
-  const getExerciseRecommendations = (
-    hasDiabetes: boolean,
-    hasHypertension: boolean
-  ): string[] => {
-    // Default exercises
-    let exercises = ["bench presses", "deadlifts", "overhead presses", "squats", "yoga"];
-
-    // Modify based on conditions
-    if (hasDiabetes) {
-      if (!exercises.includes("yoga")) {
-        exercises.push("yoga");
-      }
-    }
-
-    if (hasHypertension) {
-      exercises = exercises.filter((ex) => ex !== "deadlifts");
-      exercises.push("walking", "light cardio");
-    }
-
-    return exercises;
-  };
-
-  const getEquipmentRecommendations = (
-    hasDiabetes: boolean,
-    hasHypertension: boolean
-  ): string[] => {
-    // Default equipment
-    let equipment = ["barbells", "dumbbells"];
-
-    // Modify based on conditions
-    if (hasDiabetes) {
-      equipment.push("blood glucose monitor");
-    }
-
-    if (hasHypertension) {
-      equipment.push("heart rate monitor");
-    }
-
-    return equipment;
-  };
-
   const onSubmit = async (values: FormValues) => {
-    console.log(values);
-    // const bmi = calculateBMI(values.height, values.weight);
-    // const fitnessGoal = getFitnessGoal(bmi);
-    // const hasDiabetes = values.diabetes === "Yes";
-    // const hasHypertension = values.hypertension === "Yes";
-
-    // const exercises = getExerciseRecommendations(hasDiabetes, hasHypertension);
-    // const equipment = getEquipmentRecommendations(hasDiabetes, hasHypertension);
     setIsLoading(true);
+    setResults(null);
     const data = {
       "gender": values.sex,
       "age": values.age,
       "height": (values.height * 100),
       "weight": values.weight,
-      "isHypertension": (values.hypertension == "Yes") ? true : false,
-      "isDiabetes": (values.diabetes == "Yes") ? true : false
+      "isHypertension": (values.hypertension === "Yes"),
+      "isDiabetes": (values.diabetes === "Yes")
     }
 
     try {
@@ -174,45 +133,68 @@ export default function ExerciseEquipmentClient() {
         exercises,
         equipment,
       });
-      setIsLoading(false);
     } catch (err) {
       console.error(err);
+    } finally {
       setIsLoading(false);
     }
   };
 
-  return (
-    <div className="bg-black min-h-screen pt-24 pb-12 px-4">
-      <div className="container mx-auto max-w-4xl">
-        <h1 className="text-3xl font-bold mb-2 text-white bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500">Exercise & Equipment</h1>
-        <p className="text-gray-400 mb-8">
-          Get personalized exercise and fitness equipment recommendations based on your health conditions.
-        </p>
+  if (!isDataLoaded) {
+      return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-4 text-lg">Loading Profile Data...</p>
+      </div>
+    );
+  }
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <Card className="bg-zinc-900/70 border border-zinc-700/50">
-            <CardHeader className="border-b border-zinc-700/50">
-              <CardTitle className="text-white">Health Data</CardTitle>
-              <CardDescription className="text-gray-400">
-                Enter your health information to get accurate recommendations
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="sex"
-                      render={({ field }) => (
+  return (
+    <div className="bg-gradient-to-br from-zinc-900 via-black to-zinc-900 text-white min-h-screen pt-28 md:pt-36 pb-16 md:pb-24 overflow-x-hidden">
+      <div className="container mx-auto max-w-6xl px-4 md:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "circOut" }}
+        >
+          <div className="mb-8 md:mb-10">
+            <Link href="/" className="inline-flex items-center text-primary hover:text-primary/80 group text-sm font-medium transition-colors">
+              <HomeIcon size={16} className="mr-1.5 transition-transform duration-200 group-hover:-translate-x-0.5" />
+              Back to Home
+            </Link>
+          </div>
+
+          <header className="text-center mb-10 md:mb-12">
+            <Sparkles size={52} className="mx-auto mb-5 text-primary" />
+            <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight">
+              Exercise & Equipment <span className="text-sky-500"> Planner</span>
+            </h1>
+            <p className="text-gray-400 mt-4 text-md md:text-lg max-w-2xl mx-auto">
+              Get personalized exercise and equipment recommendations based on your health profile.
+            </p>
+          </header>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            <Card className="bg-zinc-900/70 border-zinc-700/60 shadow-2xl backdrop-blur-sm rounded-xl">
+              <CardHeader>
+                <CardTitle className="text-2xl text-white flex items-center">
+                  <Dumbbell size={24} className="mr-3 text-primary" />
+                  Health Data
+                </CardTitle>
+                <CardDescription className="text-gray-400">
+                  Enter your health information for accurate recommendations.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField control={form.control} name="sex" render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-gray-300">Sex</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white focus:ring-primary">
                                 <SelectValue placeholder="Select sex" />
                               </SelectTrigger>
                             </FormControl>
@@ -223,84 +205,44 @@ export default function ExerciseEquipmentClient() {
                           </Select>
                           <FormMessage />
                         </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="age"
-                      render={({ field }) => (
+                      )} />
+                      <FormField control={form.control} name="age" render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-gray-300">Age</FormLabel>
                           <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="Enter age"
-                              className="bg-zinc-800 border-zinc-700 text-white"
-                              {...field}
-                            />
+                            <Input type="number" placeholder="Enter age" className="bg-zinc-800 border-zinc-700 text-white focus:ring-primary" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="height"
-                      render={({ field }) => (
+                      )} />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField control={form.control} name="height" render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-gray-300">Height (meters)</FormLabel>
                           <FormControl>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              placeholder="Example: 1.75"
-                              className="bg-zinc-800 border-zinc-700 text-white"
-                              {...field}
-                            />
+                            <Input type="number" step="0.01" placeholder="Example: 1.75" className="bg-zinc-800 border-zinc-700 text-white focus:ring-primary" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="weight"
-                      render={({ field }) => (
+                      )} />
+                      <FormField control={form.control} name="weight" render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-gray-300">Weight (kg)</FormLabel>
                           <FormControl>
-                            <Input
-                              type="number"
-                              step="0.1"
-                              placeholder="Enter weight"
-                              className="bg-zinc-800 border-zinc-700 text-white"
-                              {...field}
-                            />
+                            <Input type="number" step="0.1" placeholder="Enter weight" className="bg-zinc-800 border-zinc-700 text-white focus:ring-primary" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="hypertension"
-                      render={({ field }) => (
+                      )} />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField control={form.control} name="hypertension" render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-gray-300">Hypertension</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white focus:ring-primary">
                                 <SelectValue placeholder="Do you have hypertension?" />
                               </SelectTrigger>
                             </FormControl>
@@ -311,21 +253,13 @@ export default function ExerciseEquipmentClient() {
                           </Select>
                           <FormMessage />
                         </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="diabetes"
-                      render={({ field }) => (
+                      )} />
+                      <FormField control={form.control} name="diabetes" render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-gray-300">Diabetes</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white focus:ring-primary">
                                 <SelectValue placeholder="Do you have diabetes?" />
                               </SelectTrigger>
                             </FormControl>
@@ -336,76 +270,77 @@ export default function ExerciseEquipmentClient() {
                           </Select>
                           <FormMessage />
                         </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <Button type="submit" className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700" disabled={isLoading ? true : false}>
-                    {
-                      isLoading ? (
-                        <>
-                        <Loader2 className="animate-spin h-5 w-5 mr-2" />
-                          Loading
-                        </>
-                    ) : (
-                      <>Analyze</>
-                      )
-                    }
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-
-          {results && (
-            <Card className="bg-zinc-900/70 border border-zinc-700/50">
-              <CardHeader className="border-b border-zinc-700/50">
-                <CardTitle className="text-white">Analysis Results</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Recommendations based on your health data
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="font-medium text-sm text-gray-400 mb-2">
-                      Fitness Goal
-                    </h3>
-                    <Badge variant="outline" className="text-lg py-2 px-4 font-semibold border-indigo-500/50 text-indigo-300 bg-zinc-900/50">
-                      {results.fitnessGoal}
-                    </Badge>
-                  </div>
-
-                  <div>
-                    <h3 className="font-medium text-sm text-gray-400 mb-2">
-                      Recommended Exercises
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {results.exercises.map((exercise, index) => (
-                        <Badge key={index} variant="secondary" className="bg-indigo-500/20 text-indigo-300 border-indigo-500/50">
-                          {exercise}
-                        </Badge>
-                      ))}
+                      )} />
                     </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-medium text-sm text-gray-400 mb-2">
-                      Recommended Equipment
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {results.equipment.map((equipment, index) => (
-                        <Badge key={index} variant="secondary" className="bg-purple-500/20 text-purple-300 border-purple-500/50">
-                          {equipment}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                    <Button type="submit" className="w-full bg-gradient-to-r from-primary via-primary/90 to-primary/80 text-primary-foreground hover:opacity-90 font-bold py-3.5 text-lg mt-6 h-14 shadow-lg shadow-primary/40" disabled={isLoading}>
+                      {isLoading ? (
+                        <><Loader2 className="animate-spin h-5 w-5 mr-2" />Analyzing...</>
+                      ) : "Get Recommendations"}
+                    </Button>
+                  </form>
+                </Form>
               </CardContent>
             </Card>
-          )}
-        </div>
+
+            <AnimatePresence>
+            {isLoading && !results && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center p-6 bg-zinc-900/80 border-zinc-700/70 rounded-xl shadow-xl text-center min-h-[400px]">
+                <Loader2 size={36} className="text-primary animate-spin mb-4" />
+                <p className="text-lg font-semibold text-white">Crafting your perfect plan, Bro...</p>
+              </motion.div>
+            )}
+            {results && !isLoading && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                <Card className="bg-zinc-900/70 border-zinc-700/60 shadow-2xl backdrop-blur-sm rounded-xl">
+                  <CardHeader>
+                    <CardTitle className="text-2xl text-white flex items-center">
+                        <ClipboardCheck size={24} className="mr-3 text-primary"/>
+                        Analysis Results
+                    </CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Your personalized recommendations are ready.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6 space-y-6">
+                    <div>
+                      <h3 className="font-semibold text-md text-gray-300 mb-2">
+                        Fitness Goal
+                      </h3>
+                      <Badge variant="outline" className="text-lg py-2 px-4 font-semibold border-sky-500/50 text-sky-300 bg-sky-900/20">
+                        {results.fitnessGoal}
+                      </Badge>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-md text-gray-300 mb-2">
+                        Recommended Exercises
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {results.exercises.map((exercise, index) => (
+                          <Badge key={index} variant="secondary" className="bg-sky-500/20 text-sky-300 border-sky-500/50">
+                            {exercise}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-md text-gray-300 mb-2">
+                        Recommended Equipment
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {results.equipment.map((equipment, index) => (
+                          <Badge key={index} variant="secondary" className="bg-sky-500/20 text-sky-300 border-sky-500/50">
+                            {equipment}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
       </div>
     </div>
   );

@@ -186,7 +186,7 @@ export default function FoodAnalyzerClient() {
           <header className="text-center mb-10 md:mb-12">
             <Camera size={52} className="mx-auto mb-5 text-white" />
             <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight">
-              GYM BRO <span className="text-sky-500">Food Analyzer</span>
+              Food <span className="text-sky-500">Analyzer</span>
             </h1>
             <p className="text-gray-400 mt-4 text-md md:text-lg max-w-2xl mx-auto">
               Upload an image of your meal. Our AI will identify the food and

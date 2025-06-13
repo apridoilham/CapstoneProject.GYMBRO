@@ -448,7 +448,7 @@ export default function BmiCalculatorClient() {
           <header className="text-center mb-12 md:mb-16">
             <Calculator size={52} className="mx-auto mb-5 text-white" />
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight">
-              GYM BRO <span className="text-sky-500">BMI Analyzer</span>
+              BMI <span className="text-sky-500">Analyzer</span>
             </h1>
             <p className="text-gray-400 mt-4 text-md md:text-lg max-w-2xl mx-auto">
               Instantly visualize your Body Mass Index. Adjust height and weight

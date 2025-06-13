@@ -22,7 +22,6 @@ interface Message {
   id: string;
 }
 
-// Add translations
 const translations = {
   en: {
     welcome:
@@ -46,12 +45,11 @@ const translations = {
     processingError:
       "Maaf bro, ada masalah dalam memproses permintaan. Coba lagi ya!",
   },
-  // Add more languages as needed
 };
 
 export default function Chatbot() {
   const router = useRouter();
-  const [language, setLanguage] = useState<"en" | "id">("id"); // Default to Indonesian
+  const [language, setLanguage] = useState<"en" | "id">("en");
   const t = translations[language];
 
   const [isOpen, setIsOpen] = useState(false);
@@ -80,11 +78,9 @@ export default function Chatbot() {
     }
   }, [messages, isOpen]);
 
-  // Add language toggle
   const toggleLanguage = () => {
     const newLang = language === "en" ? "id" : "en";
     setLanguage(newLang);
-    // Update welcome message
     setMessages((prev) => [
       {
         type: "bot",
@@ -110,7 +106,6 @@ export default function Chatbot() {
       const currentInput = input;
       setInput("");
 
-      // Call API chatbot
       const response = await fetch("/api/chatbot", {
         method: "POST",
         headers: {
@@ -147,7 +142,6 @@ export default function Chatbot() {
     }
   };
 
-  // Optimize initial animations
   const chatVariants = {
     hidden: { opacity: 0, y: 20, scale: 0.95 },
     visible: {
