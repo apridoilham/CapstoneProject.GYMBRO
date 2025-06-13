@@ -1,42 +1,69 @@
+### README.md
+
 # Health & Food Analysis Website (Next.js)
 
-## Project Description
-A Next.js-based website with health and food analysis features including:
-- **Pages:** Home, About, Inside, Login, Register, Profile
-- **Tools:** 
-  - BMI Calculator (ML-validated algorithm)
-  - Calorie Calculator
-- **Food Analyzer:** Using Hugging Face API
-- **Chatbot:** Integrated with `tinyllama-1.1b` model
-- **Tech Stack:** Next.js (Fullstack), MongoDB, Cloudinary
-- **Deployment:** Vercel
+## Deskripsi Proyek
+
+Situs web berbasis Next.js dengan fitur analisis kesehatan dan makanan.
+
+-   **Halaman**: Home, About, Blog, Login, Register, Profile, dan halaman Fitur.
+-   **Fitur Utama**:
+    -   AI Food Analyzer
+    -   AI Chatbot
+    -   Rekomendasi Latihan & Peralatan
+-   **Fitur Tambahan**:
+    -   BMI & TDEE Calculator
+
+-   **Tumpukan Teknologi**: Next.js (Fullstack), MongoDB, Cloudinary, Tailwind CSS.
+-   **Deployment**: Vercel.
 
 ---
 
-## Setup Guide
+## Panduan Setup
 
-### 1. Prerequisites
-- Node.js ≥ v18
-- npm ≥ v9 or yarn
+### 1. Prasyarat
+- Node.js (v18 atau lebih baru)
+- npm atau yarn
 - Git
-- MongoDB Atlas account
-- Cloudinary account
-- Hugging Face account (for API access)
 
-### 2. Clone Repository
+### 2. Clone Repositori
 ```bash
 git clone https://github.com/apridoilham/CapstoneProject.GYMBRO.git
-cd project-directory
+cd CapstoneProject.GYMBRO
 ```
 
-### 3. Siapkan 1 MongoDB Cloud, lalu set up ke file `.env`-nya seperti link akses
-- MONGODB_URI = your_link
+### 3. Instalasi Dependensi
+Jalankan perintah berikut untuk menginstal semua paket yang dibutuhkan.
+```bash
+npm install
+```
 
-### 4. Siapkan akun pada library Cloudinary, lalu set up kembali file `.env`
-- CLOUDINARY_NAME=your_cloud_name
-- CLOUDINARY_KEY=123456789012345
-- CLOUDINARY_SECRET=your_api_secret
+### 4. Konfigurasi Variabel Lingkungan
+Buat file bernama `.env` di direktori root dan isi dengan format berikut:
+```env
+# .env
 
-### 5. Untuk menjalankan bisa ketik `npm run dev`
+# Koneksi ke MongoDB Atlas
+MONGO_DB_CONNECTION="your_mongodb_connection_string"
 
-### 6. Akses API bisa mengakses `baseurl/api`
+# Kunci rahasia untuk otentikasi JWT
+JWT_SECRET="your_strong_and_secret_jwt_key"
+
+# Kredensial dari akun Cloudinary Anda
+CLOUDINARY_NAME="your_cloudinary_name"
+CLOUDINARY_API="your_cloudinary_api_key"
+CLOUDINARY_KEY="your_cloudinary_api_secret"
+
+# URL dasar aplikasi (untuk development)
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
+
+### 5. Jalankan Aplikasi
+Gunakan perintah berikut untuk memulai server development.
+```bash
+npm run dev
+```
+Aplikasi akan berjalan di `http://localhost:3000`.
+
+### 6. Akses API
+Endpoint API internal dapat diakses melalui `http://localhost:3000/api`. Untuk detail lengkap, lihat file `endpoint.md`.
