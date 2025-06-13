@@ -26,7 +26,7 @@ import {
   ClipboardList,
   InfoIcon,
   HomeIcon,
-} from "lucide-react"; // Tambahkan HomeIcon
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
@@ -122,34 +122,21 @@ const BmiFigureDisplay = ({
   gender: Gender;
 }) => {
   const category = getBmiCategoryByValue(currentBmi);
-  const categoryLabel = category ? category.label : null;
 
-  let imagePathToDisplay = `/images/bmi/${
-    gender === "male"
-      ? "DefaultMale.svg"
-      : gender === "female"
-      ? "DefaultFemale.svg"
-      : "DefaultMale.svg"
-  }`;
-  let altText = `Default ${
-    gender === "male" || gender === "female" ? gender : "male"
-  } body figure`;
-
-  if (categoryLabel) {
-    const baseName = baseImageNames[categoryLabel];
-    const validGendersForSpecificImages: Gender[] = ["male", "female"];
-    const genderForImage = validGendersForSpecificImages.includes(gender)
-      ? gender
-      : "male";
-
-    if (baseName) {
-      const genderSuffix =
-        genderForImage.charAt(0).toUpperCase() + genderForImage.slice(1);
-      const potentialPath = `/images/bmi/${baseName}${genderSuffix}.svg`;
-      imagePathToDisplay = potentialPath;
-      altText = `${categoryLabel} ${genderForImage} body figure`;
-    }
+  if (!category) {
+    return null;
   }
+
+  const categoryLabel = category.label;
+  const baseName = baseImageNames[categoryLabel];
+  const validGendersForSpecificImages: Gender[] = ["male", "female"];
+  const genderForImage = validGendersForSpecificImages.includes(gender)
+    ? gender
+    : "male";
+  const genderSuffix =
+    genderForImage.charAt(0).toUpperCase() + genderForImage.slice(1);
+  const imagePathToDisplay = `/images/bmi/${baseName}${genderSuffix}.svg`;
+  const altText = `${categoryLabel} ${genderForImage} body figure`;
 
   return (
     <div className="sticky top-32 md:top-36 flex flex-col items-center w-full">
@@ -165,33 +152,31 @@ const BmiFigureDisplay = ({
           alt={altText}
           fill
           objectFit="contain"
-          priority={!categoryLabel}
+          priority
           sizes="(max-width: 768px) 180px, (max-width: 1024px) 220px, 256px"
         />
       </motion.div>
       <AnimatePresence>
-        {category && (
-          <motion.div
-            key={category.label + "-label"}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ delay: 0.05, duration: 0.2 }}
-            className={cn(
-              "py-1.5 px-4 rounded-full text-sm font-semibold shadow-lg backdrop-blur-md border text-center w-fit",
-              category.color,
-              category.label === "Underweight"
-                ? "bg-blue-600/20 border-blue-500/50"
-                : category.label === "Healthy Weight"
-                ? "bg-green-600/20 border-green-500/50"
-                : category.label === "Overweight"
-                ? "bg-yellow-600/20 border-yellow-500/50"
-                : "bg-red-600/20 border-red-500/50"
-            )}
-          >
-            {category.label}
-          </motion.div>
-        )}
+        <motion.div
+          key={category.label + "-label"}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          transition={{ delay: 0.05, duration: 0.2 }}
+          className={cn(
+            "py-1.5 px-4 rounded-full text-sm font-semibold shadow-lg backdrop-blur-md border text-center w-fit",
+            category.color,
+            category.label === "Underweight"
+              ? "bg-blue-600/20 border-blue-500/50"
+              : category.label === "Healthy Weight"
+              ? "bg-green-600/20 border-green-500/50"
+              : category.label === "Overweight"
+              ? "bg-yellow-600/20 border-yellow-500/50"
+              : "bg-red-600/20 border-red-500/50"
+          )}
+        >
+          {category.label}
+        </motion.div>
       </AnimatePresence>
     </div>
   );
@@ -229,6 +214,39 @@ export default function BmiCalculatorClient() {
   const heightUnitPrev = useRef(unitSystem === "metric" ? "cm" : "in");
   const weightUnitPrev = useRef(unitSystem === "metric" ? "kg" : "lbs");
 
+  function calculateCurrentBmiVal(
+    currentH: number,
+    currentW: number,
+    currentUnit: UnitSystem
+  ): number | null {
+    let hInMeters = currentH;
+    let wInKg = currentW;
+
+    if (currentUnit === "imperial") {
+      hInMeters = currentH * 0.0254;
+      wInKg = currentW * 0.453592;
+    } else {
+      hInMeters = currentH / 100;
+    }
+    if (hInMeters > 0 && wInKg > 0) {
+      return parseFloat((wInKg / (hInMeters * hInMeters)).toFixed(1));
+    }
+    return null;
+  }
+  
+  const getBmiValueWithRules = (h: number, w: number, u: UnitSystem): number | null => {
+    const currentMaxHeight = u === 'metric' ? 250 : 98;
+    const currentMaxWeight = u === 'metric' ? 200 : 440;
+    
+    if (h === 0 || w === 0) {
+      return 18.0; 
+    }
+    if (h > currentMaxHeight || w > currentMaxWeight) {
+      return 30.0; 
+    }
+    return calculateCurrentBmiVal(h, w, u);
+  };
+
   useEffect(() => {
     const storedProfileString = localStorage.getItem("gymBroUserProfile");
     let initialH = DEFAULT_BMI_INPUTS.heightCm || 170;
@@ -262,36 +280,20 @@ export default function BmiCalculatorClient() {
     setHeight(initialH);
     setWeight(initialW);
     setGender(initialG);
+    
+    const initialBmi = getBmiValueWithRules(initialH, initialW, "metric");
+    setCalculatedBmiValue(initialBmi);
+
     setProfileDataLoaded(true);
   }, []);
 
-  function calculateCurrentBmiVal(
-    currentH: number,
-    currentW: number,
-    currentUnit: UnitSystem
-  ): number | null {
-    let hInMeters = currentH;
-    let wInKg = currentW;
-
-    if (currentUnit === "imperial") {
-      hInMeters = currentH * 0.0254;
-      wInKg = currentW * 0.453592;
-    } else {
-      hInMeters = currentH / 100;
-    }
-    if (hInMeters > 0 && wInKg > 0) {
-      return parseFloat((wInKg / (hInMeters * hInMeters)).toFixed(1));
-    }
-    return null;
-  }
-
   useEffect(() => {
     if (!profileDataLoaded) return;
-    const bmi = calculateCurrentBmiVal(height, weight, unitSystem);
+    const bmi = getBmiValueWithRules(height, weight, unitSystem);
     setCalculatedBmiValue(bmi);
     setDisplayBmiResult(null);
     setDisplayBmiCategory(null);
-  }, [height, weight, unitSystem, profileDataLoaded]);
+  }, [height, weight, unitSystem]);
 
   useEffect(() => {
     if (!profileDataLoaded) return;
@@ -342,16 +344,7 @@ export default function BmiCalculatorClient() {
 
     heightUnitPrev.current = unitSystem === "metric" ? "cm" : "in";
     weightUnitPrev.current = unitSystem === "metric" ? "kg" : "lbs";
-  }, [
-    unitSystem,
-    profileDataLoaded,
-    height,
-    weight,
-    maxHeight,
-    maxWeight,
-    minHeight,
-    minWeight,
-  ]);
+  }, [unitSystem]);
 
   const handleHeightChangeSlider = (value: number[]) => {
     setHeight(value[0]);
@@ -364,25 +357,48 @@ export default function BmiCalculatorClient() {
   const handleHeightInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
     if (rawValue === "") {
-      setHeight(minHeight);
-    } else {
-      const val = parseFloat(rawValue);
-      if (!isNaN(val)) {
-        setHeight(Math.max(minHeight, Math.min(maxHeight, val)));
-      }
+      setHeight(0);
+      return;
     }
+    const val = parseFloat(rawValue);
+    if (!isNaN(val)) {
+      setHeight(val);
+    }
+  };
+
+  const handleHeightInputBlur = () => {
+    setHeight((currentHeight) => {
+      if (currentHeight > maxHeight) return maxHeight;
+      if (currentHeight > 0 && currentHeight < minHeight) return minHeight;
+      if (currentHeight === 0) return minHeight;
+      return currentHeight;
+    });
   };
 
   const handleWeightInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
     if (rawValue === "") {
-      setWeight(minWeight);
-    } else {
-      const val = parseFloat(rawValue);
-      if (!isNaN(val)) {
-        setWeight(Math.max(minWeight, Math.min(maxWeight, val)));
-      }
+      setWeight(0);
+      return;
     }
+    const val = parseFloat(rawValue);
+    if (!isNaN(val)) {
+      setWeight(val);
+    }
+  };
+
+  const handleWeightInputBlur = () => {
+    setWeight((currentWeight) => {
+        if (currentWeight > maxWeight) return maxWeight;
+        if (currentWeight > 0 && currentWeight < minWeight) return minWeight;
+        if (currentWeight === 0) return minWeight;
+        
+        let finalWeight = currentWeight;
+        if (unitSystem === "metric") {
+            return parseFloat(finalWeight.toFixed(1));
+        }
+        return Math.round(finalWeight);
+    });
   };
 
   const handleSubmitCalculation = () => {
@@ -436,8 +452,8 @@ export default function BmiCalculatorClient() {
             </h1>
             <p className="text-gray-400 mt-4 text-md md:text-lg max-w-2xl mx-auto">
               Instantly visualize your Body Mass Index. Adjust height and weight
-              to see real-time figure estimations. BMI is a general guide&mdash;true
-              fitness is multifaceted!
+              to see real-time figure estimations. BMI is a general
+              guide&mdash;true fitness is multifaceted!
             </p>
           </header>
 
@@ -456,9 +472,7 @@ export default function BmiCalculatorClient() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-8 pt-2">
-                  {/* Gender & Unit System */}
                   <div className="grid grid-cols-2 gap-x-4 gap-y-5">
-                    {/* Gender */}
                     <div>
                       <Label className="text-sm font-medium text-white mb-2 block">
                         Gender
@@ -497,12 +511,16 @@ export default function BmiCalculatorClient() {
                       </RadioGroup>
                     </div>
 
-                    {/* Unit System */}
                     <div>
                       <Label className="text-sm font-medium text-zinc-300 mb-2 block">
                         Unit System
                       </Label>
-                      <Select value={unitSystem} onValueChange={(value) => setUnitSystem(value as UnitSystem)}>
+                      <Select
+                        value={unitSystem}
+                        onValueChange={(value) =>
+                          setUnitSystem(value as UnitSystem)
+                        }
+                      >
                         <SelectTrigger className="w-full bg-zinc-800 border border-zinc-700 text-white focus:ring-2 focus:ring-primary text-sm h-10">
                           <SelectValue placeholder="Select system" />
                         </SelectTrigger>
@@ -524,9 +542,7 @@ export default function BmiCalculatorClient() {
                     </div>
                   </div>
 
-                  {/* Height & Weight Section */}
                   <div className="space-y-6">
-                    {/* Height */}
                     <div className="space-y-3">
                       <div className="flex justify-between items-center gap-4">
                         <Label
@@ -538,8 +554,9 @@ export default function BmiCalculatorClient() {
                         <Input
                           type="number"
                           id="height"
-                          value={String(height)}
+                          value={height === 0 ? "" : String(height)}
                           onChange={handleHeightInputChange}
+                          onBlur={handleHeightInputBlur}
                           className="w-32 text-center bg-zinc-800 border border-zinc-700 text-white focus:ring-2 focus:ring-primary h-10 text-base font-semibold"
                           min={minHeight}
                           max={maxHeight}
@@ -555,7 +572,6 @@ export default function BmiCalculatorClient() {
                       />
                     </div>
 
-                    {/* Weight */}
                     <div className="space-y-3">
                       <div className="flex justify-between items-center gap-4">
                         <Label
@@ -567,8 +583,9 @@ export default function BmiCalculatorClient() {
                         <Input
                           type="number"
                           id="weight"
-                          value={String(weight)}
+                          value={weight === 0 ? "" : String(weight)}
                           onChange={handleWeightInputChange}
+                          onBlur={handleWeightInputBlur}
                           className="w-32 text-center bg-zinc-800 border border-zinc-700 text-white focus:ring-2 focus:ring-primary h-10 text-base font-semibold"
                           min={minWeight}
                           max={maxWeight}
@@ -586,7 +603,6 @@ export default function BmiCalculatorClient() {
                     </div>
                   </div>
 
-                  {/* Submit Button */}
                   <Button
                     onClick={handleSubmitCalculation}
                     disabled={isCalculating}
@@ -677,7 +693,8 @@ export default function BmiCalculatorClient() {
                   >
                     <InfoIcon size={32} className="text-gray-500 mb-3" />
                     <p className="text-md font-semibold text-gray-400">
-                      Click &quot;Show My BMI Analysis&quot; for detailed results.
+                      Click &quot;Show My BMI Analysis&quot; for detailed
+                      results.
                     </p>
                   </motion.div>
                 )}
