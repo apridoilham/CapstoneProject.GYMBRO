@@ -52,8 +52,7 @@ export default function RegisterClient() {
 
   const onSubmit = async (data: RegisterFormValues) => {
     try {
-      // Call the register API using Axios
-      const response = await axios.post("http://localhost:3000/api/register", {
+      const response = await axios.post("/api/register", {
         fullName: data.name,
         email: data.email,
         password: data.password,
@@ -63,11 +62,9 @@ export default function RegisterClient() {
       const result = response.data;
 
       if (!result.success) {
-        // Handle API errors
         if (result.error) {
           throw new Error(result.error);
         }
-        // Handle validation errors
         if (result.validationError && result.validationError.length > 0) {
           const errorMessages = result.validationError
             .map((err: any) => err.message)
@@ -77,17 +74,16 @@ export default function RegisterClient() {
         throw new Error("Registration failed");
       }
 
-      // Show success toast
       toast({
         title: "Account Created Successfully!",
         description: "Please login with your new account credentials.",
       });
 
-      // Redirect to login page
       router.push("/login");
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.error ||
+        error.response?.data?.message || // Menambahkan penanganan untuk message dari handleMongooseError
         error.message ||
         "Something went wrong. Please try again, Bro.";
       toast({
@@ -122,7 +118,7 @@ export default function RegisterClient() {
             <Input
               id="name"
               type="text"
-              className="bg-zinc-800 border-zinc-700 text-white placeholder-gray-500"
+              className="bg-zinc-800 border-zinc-700 text-white placeholder-gray-500 focus:ring-primary"
               placeholder="Your Name, Future Legend"
               {...register("name")}
             />
@@ -141,7 +137,7 @@ export default function RegisterClient() {
             <Input
               id="emailReg"
               type="email"
-              className="bg-zinc-800 border-zinc-700 text-white placeholder-gray-500"
+              className="bg-zinc-800 border-zinc-700 text-white placeholder-gray-500 focus:ring-primary"
               placeholder="you@example.com"
               {...register("email")}
             />
@@ -163,7 +159,7 @@ export default function RegisterClient() {
               <Input
                 id="passwordReg"
                 type={showPassword ? "text" : "password"}
-                className="bg-zinc-800 border-zinc-700 text-white pr-10 placeholder-gray-500"
+                className="bg-zinc-800 border-zinc-700 text-white pr-10 placeholder-gray-500 focus:ring-primary"
                 placeholder="Min. 8 Characters, Make it Strong!"
                 {...register("password")}
               />
@@ -194,7 +190,7 @@ export default function RegisterClient() {
               <Input
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
-                className="bg-zinc-800 border-zinc-700 text-white pr-10 placeholder-gray-500"
+                className="bg-zinc-800 border-zinc-700 text-white pr-10 placeholder-gray-500 focus:ring-primary"
                 placeholder="Repeat Your Strong Password"
                 {...register("confirmPassword")}
               />
@@ -220,7 +216,7 @@ export default function RegisterClient() {
 
           <Button
             type="submit"
-            className="w-full font-semibold py-3"
+            className="w-full font-semibold py-3 bg-primary hover:bg-primary/90 text-primary-foreground"
             disabled={isSubmitting}
           >
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

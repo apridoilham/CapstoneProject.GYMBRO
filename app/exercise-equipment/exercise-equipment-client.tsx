@@ -33,6 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, HomeIcon, Dumbbell, Sparkles, ClipboardCheck } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   sex: z.enum(["Laki-laki", "Perempuan"]),
@@ -44,6 +45,15 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+const badgeColors = [
+  "border-sky-500/50 text-sky-300 bg-sky-500/20 hover:bg-sky-500/30",
+  "border-green-500/50 text-green-300 bg-green-500/20 hover:bg-green-500/30",
+  "border-yellow-500/50 text-yellow-300 bg-yellow-500/20 hover:bg-yellow-500/30",
+  "border-fuchsia-500/50 text-fuchsia-300 bg-fuchsia-500/20 hover:bg-fuchsia-500/30",
+  "border-red-500/50 text-red-300 bg-red-500/20 hover:bg-red-500/30",
+  "border-indigo-500/50 text-indigo-300 bg-indigo-500/20 hover:bg-indigo-500/30",
+];
 
 export default function ExerciseEquipmentClient() {
   const [results, setResults] = useState<{
@@ -306,7 +316,7 @@ export default function ExerciseEquipmentClient() {
                       <h3 className="font-semibold text-md text-gray-300 mb-2">
                         Fitness Goal
                       </h3>
-                      <Badge variant="outline" className="text-lg py-2 px-4 font-semibold border-sky-500/50 text-sky-300 bg-sky-900/20">
+                      <Badge variant="outline" className="text-lg py-2 px-4 font-semibold border-green-500/50 text-green-300 bg-green-900/20">
                         {results.fitnessGoal}
                       </Badge>
                     </div>
@@ -316,7 +326,7 @@ export default function ExerciseEquipmentClient() {
                       </h3>
                       <div className="flex flex-wrap gap-2">
                         {results.exercises.map((exercise, index) => (
-                          <Badge key={index} variant="secondary" className="bg-sky-500/20 text-sky-300 border-sky-500/50">
+                          <Badge key={index} variant="secondary" className={cn("transition-colors", badgeColors[index % badgeColors.length])}>
                             {exercise}
                           </Badge>
                         ))}
@@ -328,7 +338,7 @@ export default function ExerciseEquipmentClient() {
                       </h3>
                       <div className="flex flex-wrap gap-2">
                         {results.equipment.map((equipment, index) => (
-                          <Badge key={index} variant="secondary" className="bg-sky-500/20 text-sky-300 border-sky-500/50">
+                          <Badge key={index} variant="secondary" className={cn("transition-colors", badgeColors[index % badgeColors.length])}>
                             {equipment}
                           </Badge>
                         ))}
